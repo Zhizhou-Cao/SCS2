@@ -8,6 +8,6 @@ Workflow:
 4. Check if different topic affects accuracy of models, by creating a model that does not include 'Art', for example. 
 
 Q1. Machine or Human ? (1000 words models)
-Q2. 400/1000 words, change training/test set? which one
+Q2. 两个模型[400/1000], 分别测两个test set[400/1000], 得出4种结果
 Q3. two models(train: 1.whole train set/ 2.except "Architecture").  test set always Architecture
 Q4. [undecided] small function words
