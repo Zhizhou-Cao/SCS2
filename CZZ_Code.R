@@ -23,6 +23,49 @@ combined_list <- list(features = combined_features,
                       booknames = combined_booknames)
 
 
+# Random select cross validation
+train_random <- combined_list$features
+test_random <- NULL
+truth_random <- NULL
+
+for (i in 1:length(train_random)){
+  # select ONE RANDOM book by this author by choosing a row (= book)
+  set.seed(1) # Ensure reproducibility of random results
+  testind <- sample(1:nrow(train_random[[i]]), 1)
+  # add this book to the test set
+  test_random <- rbind(test_random, train_random[[i]][testind,])
+  truth_random <- c(truth_random, i)
+  
+  # now discard the book from the training set
+  # drop = FALSE prevent the matrix converting into a vector
+  train_random[[i]] <- train_random[[i]][-testind,,drop=FALSE]
+  
+  predsDA_random <- discriminantCorpus(train_random, test_random)
+  predsKNN_random <- KNNCorpus(train_random, test_random)
+}
+# Multinomial (more than two categories) discriminant analysis
+DA_random_accuracy <- sum(predsDA_random==truth_random)/length(truth_random)
+DA_random_accuracy
+# KNN 
+KNN_random_accuracy <- sum(predsKNN_random==truth_random)/length(truth_random)
+KNN_random_accuracy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #select all essays
 #humanfeatures <- humanM$features[[1]]
 #GPTfeatures <- GPTM$features[[1]]
