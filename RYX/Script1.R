@@ -32,7 +32,7 @@ authornames <- c(rep(1,nrow(humanfeatures)), rep(2,nrow(GPTfeatures)))
 # reducedGPTfeatures <- reducewords(GPTfeatures,numwords)
 # reducedfeatures <- rbind(reducedhumanfeatures, reducedGPTfeatures)
 
-
+DA_pred <- numeric(nrow(features))
 KNN_pred <- numeric(nrow(features))
 
 # LOOCV
@@ -41,6 +41,10 @@ for (i in 1:nrow(features)) {
   test <- matrix(features[i,,drop=FALSE], nrow = 1) #note that only the test set size changes
 
   KNN_pred[i] <- myKNN(train, test, authornames[-i], k = 1)
+  
+  # Prepare data format for discriminantCorpus
+  train_list <- split(train, f = authornames[-i])  # Split training data into two classes based on author labels
+  DA_pred[i] <- discriminantCorpus(train_list, test)
   
 }
 
