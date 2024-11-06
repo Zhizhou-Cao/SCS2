@@ -69,6 +69,7 @@ test_LOOCV <- NULL
 truth_LOOCV <- NULL
 predsDA_LOOCV <- NULL
 predsKNN_LOOCV <- NULL
+predsRF_LOOCV <- NULL
 for (i in 1:length(train_LOOCV)) {
   for (j in 1:nrow(train_LOOCV[[i]])) {
     test_LOOCV <- matrix(features[[i]][j,],nrow=1)
@@ -80,6 +81,10 @@ for (i in 1:length(train_LOOCV)) {
     
     pred <- KNNCorpus(train_LOOCV, test_LOOCV)
     predsKNN_LOOCV <- c(predsKNN_LOOCV, pred)
+    
+    pred <- randomForestCorpus(train_LOOCV, test_LOOCV)
+    predsRF_LOOCV <- c(predsRF_LOOCV, pred)
+    
     truth_LOOCV <- c(truth_LOOCV, i)
   }}
 
@@ -89,6 +94,11 @@ DA_LOOCV_accuracy
 # KNN
 KNN_LOOCV_accuracy <-sum(predsKNN_LOOCV==truth_LOOCV)/length(truth_LOOCV)
 KNN_LOOCV_accuracy
+# RF
+RF_LOOCV_accuracy <-sum(predsRF_LOOCV==truth_LOOCV)/length(truth_LOOCV)
+RF_LOOCV_accuracy
+
+
 
 # Present the accuracy in table
 accuracy_table <- data.frame(
@@ -113,7 +123,6 @@ kable(accuracy_table)
 
 #不可用
 
-
 # 合并列表
 combined_features <- c(humanM$features, GPTM$features)
 combined_authornames <- c(humanM$authornames, GPTM$authornames)
@@ -121,13 +130,6 @@ combined_booknames <- c(humanM$booknames, GPTM$booknames)
 combined_list <- list(features = combined_features, 
                       authornames = combined_authornames, 
                       booknames = combined_booknames)
-
-
-
-
-
-
-
 
 #select all essays
 #humanfeatures <- humanM$features[[1]]
