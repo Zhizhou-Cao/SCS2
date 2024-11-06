@@ -56,14 +56,14 @@ for (i in 1:nrow(features)) {
   # Apply discriminantCorpus function
   DA_preds[i] <- discriminantCorpus(train_list, test)
   KNN_preds[i] <- KNNCorpus(train_list, test)
-  RF_preds[i] <- randomForestCorpus(train_list, test)
+  #RF_preds[i] <- randomForestCorpus(train_list, test)
 }
 # Calculate accuracy
 DA_accuracy <- sum(DA_preds == authornames) / length(authornames)
 DA_accuracy
-KNN_accuracy <- sum(KNN_preds==truth_random)/length(truth_random)
+KNN_accuracy <- sum(KNN_preds==authornames)/length(authornames)
 KNN_accuracy
-RF_accuracy <- sum(RF_preds==truth_random)/length(truth_random)
+RF_accuracy <- sum(RF_preds==authornames)/length(authornames)
 RF_accuracy
 
 # DA_preds <- numeric(nrow(features))  # Initialize DA_preds
@@ -82,4 +82,32 @@ RF_accuracy
 # DA_accuracy <- sum(DA_preds == authornames) / length(authornames)
 
 
+## Random select model
+
+# Random select cross validation (from Zhizhou)
+train_random <- features
+test_random <- NULL
+truth_random <- NULL
+
+for (i in 1:length(train_random)){
+  # select ONE RANDOM book by this author by choosing a row (= book)
+  set.seed(1) # Ensure reproducibility of random results
+  testind <- sample(1:nrow(train_random[[i]]), 1)
+  # add this book to the test set
+  test_random <- rbind(test_random, train_random[[i]][testind,])
+  truth_random <- c(truth_random, i)
+  
+  # now discard the book from the training set
+  # drop = FALSE prevent the matrix converting into a vector
+  train_random[[i]] <- train_random[[i]][-testind,,drop=FALSE]
+  
+  predsDA_random <- discriminantCorpus(train_random, test_random)
+  predsKNN_random <- KNNCorpus(train_random, test_random)
+}
+# Multinomial (more than two categories) discriminant analysis
+DA_random_accuracy <- sum(predsDA_random==truth_random)/length(truth_random)
+DA_random_accuracy
+# KNN 
+KNN_random_accuracy <- sum(predsKNN_random==truth_random)/length(truth_random)
+KNN_random_accurac
 
