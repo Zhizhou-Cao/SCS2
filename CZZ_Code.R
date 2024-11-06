@@ -108,6 +108,7 @@ accuracy_table <- data.frame(
 kable(accuracy_table)
 
 
+# K-Fold
 
 
 

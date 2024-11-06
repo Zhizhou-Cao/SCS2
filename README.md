@@ -10,7 +10,10 @@ Workflow:
 Q1. Machine or Human ? (1000 words models)
 合成两个新的文件夹，人和机器
 
-Q2. 两个模型[400/1000], 分别测两个test set[400/1000], 得出4种结果
+Q2. 测试不同模型在不同数据集的表现
+三个训练模型【500/750/1000】
+三个测试集【500/750/1000】
+出一个3x3的矩阵table
 
 Q3. two models(train: 1.whole train set/ 2.except "Architecture").  test set always Architecture
 
