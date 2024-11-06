@@ -22,6 +22,15 @@ combined_list <- list(features = combined_features,
                       authornames = combined_authornames, 
                       booknames = combined_booknames)
 
+# Create a new list for Q1
+combined_q1 <- list(
+  features = list(
+    human = humanM$features,
+    GPTM = GPTM$features
+  ),
+  authornames = c(0, 1)
+)
+
 
 # Random select cross validation
 train_random <- combined_list$features
