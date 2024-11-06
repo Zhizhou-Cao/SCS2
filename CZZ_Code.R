@@ -4,7 +4,7 @@ library(lattice)
 library(class)
 library(caret)
 library(knitr)
-
+library(randomForest)
 source("stylometryfunctions.R")
 source("reducewords.R")
 
@@ -47,6 +47,7 @@ for (i in 1:length(train_random)){
   
   predsDA_random <- discriminantCorpus(train_random, test_random)
   predsKNN_random <- KNNCorpus(train_random, test_random)
+  predsRF_random <- randomForestCorpus(train_random, test_random) 
 }
 # Multinomial (more than two categories) discriminant analysis
 DA_random_accuracy <- sum(predsDA_random==truth_random)/length(truth_random)
@@ -54,7 +55,9 @@ DA_random_accuracy
 # KNN 
 KNN_random_accuracy <- sum(predsKNN_random==truth_random)/length(truth_random)
 KNN_random_accuracy
-
+# Random Forest
+predsRF_random_accuracy <- sum(predsRF_random==truth_random)/length(truth_random)
+predsRF_random_accuracy
 
 
 
