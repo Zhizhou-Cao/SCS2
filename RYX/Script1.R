@@ -43,8 +43,8 @@ for (i in 1:nrow(features)) {
   KNN_pred[i] <- myKNN(train, test, authornames[-i], k = 1)
   
   # Prepare data format for discriminantCorpus
-  train_list <- split(train, f = authornames[-i])  # Split training data into two classes based on author labels
-  DA_pred[i] <- discriminantCorpus(train_list, test)
+  # train_list <- split(train, f = authornames[-i])  # Split training data into two classes based on author labels
+  # DA_pred[i] <- discriminantCorpus(train_list, test)
   
 }
 
