@@ -8,6 +8,7 @@ Workflow:
 4. Check if different topic affects accuracy of models, by creating a model that does not include 'Art', for example. 
 
 Q1. Machine or Human ? (1000 words models)
+合成两个新的文件夹，人和机器
 
 Q2. 两个模型[400/1000], 分别测两个test set[400/1000], 得出4种结果
 
