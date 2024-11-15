@@ -15,7 +15,7 @@ humanM$authornames <- rep(0, length(humanM$authornames))
 GPTM$authornames <- rep(1, length(GPTM$authornames))
 
 
-
+# Q1 ----
 # Create a new list for Q1
 combined_q1 <- list(
   features = list(
@@ -65,11 +65,13 @@ predsRF_random_accuracy
 # leave-one cross validation
 train_LOOCV <- combined_q1$features
 features <- combined_q1$features
+
 test_LOOCV <- NULL
 truth_LOOCV <- NULL
 predsDA_LOOCV <- NULL
 predsKNN_LOOCV <- NULL
 predsRF_LOOCV <- NULL
+
 for (i in 1:length(train_LOOCV)) {
   for (j in 1:nrow(train_LOOCV[[i]])) {
     test_LOOCV <- matrix(features[[i]][j,],nrow=1)
@@ -108,7 +110,77 @@ accuracy_table <- data.frame(
 kable(accuracy_table)
 
 
-# K-Fold
+
+
+# K-Fold (没做出来)
+
+k <-3 # k value for k-nearest neighbours
+numfolds <- 5 # Number of fold for validation
+folds <- createFolds(combined_q1$features, k=numfolds)
+accuracies <- numeric(numfolds)
+
+# Initialize empty vectors for predictions and true labels
+predsDA_KFold <- NULL
+predsKNN_KFold <- NULL
+predsRF_KFold <- NULL
+truth_KFold <- NULL
+
+for (i in 1:numfolds) {
+  # Define training and test sets
+  test_indices <- folds[[i]]
+  train_indices <- setdiff(seq_along(combined_q1$features), test_indices)
+  
+  # Extract features for training and testing
+  train_features <- combined_q1$features[train_indices]
+  test_features <- combined_q1$features[test_indices]
+  test_truth <- rep(seq_along(test_indices), length(test_indices))
+  
+  # Predictions for each model
+  predDA <- discriminantCorpus(train_features, test_features)
+  predKNN <- KNNCorpus(train_features, test_features)
+  predRF <- randomForestCorpus(train_features, test_features)
+  
+  # Store predictions and true labels
+  predsDA_KFold <- c(predsDA_KFold, predDA)
+  predsKNN_KFold <- c(predsKNN_KFold, predKNN)
+  predsRF_KFold <- c(predsRF_KFold, predRF)
+  truth_KFold <- c(truth_KFold, test_truth)
+}
+
+# Calculate accuracy for each model
+DA_KFold_accuracy <- sum(predsDA_KFold == truth_KFold) / length(truth_KFold)
+KNN_KFold_accuracy <- sum(predsKNN_KFold == truth_KFold) / length(truth_KFold)
+RF_KFold_accuracy <- sum(predsRF_KFold == truth_KFold) / length(truth_KFold)
+
+
+
+
+
+
+# Define the number of folds
+k <- 5  # You can adjust this based on the dataset size and computational power
+folds <- createFolds(combined_q1$features, k = k)
+accuracies <- numeric(k)
+# Initialize empty vectors for predictions and true labels
+predsDA_KFold <- NULL
+predsKNN_KFold <- NULL
+predsRF_KFold <- NULL
+truth_KFold <- NULL
+
+# Loop through each fold
+for (i in 1:k) {
+  traindata <- combined_q1[-folds[[i]],-5]
+  trainlabels <- combined_q1[-folds[[i]],5]
+  testdata <- combined_q1[folds[[i]],-5]
+  testlabels <- combined_q1[folds[[i]],5]
+  predKNN <- KNNCorpus(traindata,testdata)
+  accuracies[i] <- mean(preds==testlabels)
+}
+
+# Calculate accuracy for each model
+DA_KFold_accuracy <- sum(predsDA_KFold == truth_KFold) / length(truth_KFold)
+KNN_KFold_accuracy <- sum(predsKNN_KFold == truth_KFold) / length(truth_KFold)
+RF_KFold_accuracy <- sum(predsRF_KFold == truth_KFold) / length(truth_KFold)
 
 
 
@@ -122,7 +194,10 @@ kable(accuracy_table)
 
 
 
-#不可用
+
+
+
+#不可用----
 
 # 合并列表
 combined_features <- c(humanM$features, GPTM$features)
