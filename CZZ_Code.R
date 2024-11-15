@@ -153,7 +153,7 @@ KNN_KFold_accuracy <- sum(predsKNN_KFold == truth_KFold) / length(truth_KFold)
 RF_KFold_accuracy <- sum(predsRF_KFold == truth_KFold) / length(truth_KFold)
 
 
-
+ 
 
 
 
