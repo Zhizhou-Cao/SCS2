@@ -22,3 +22,4 @@ Q4. [undecided] small function words
 
 report:
 methodology part: 可以复制上一次作业的内容，不查重（但要闲的没事干可以rewrite)
+最新教的SVM，没说要写到report里面，但用了可能会分多一些？
