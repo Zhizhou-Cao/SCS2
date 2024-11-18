@@ -114,62 +114,104 @@ kable(accuracy_table)
 
 # K-Fold 
 
-# Load required data
-train_random <- combined_q1$features
+# Set up parameters
+set.seed(1) # Ensure reproducibility
+fold_range <- 3:10 # Range of folds to test
+accuracy_table <- data.frame(
+  n_folds = fold_range,
+  DA_accuracy = numeric(length(fold_range)),
+  KNN_accuracy = numeric(length(fold_range)),
+  RF_accuracy = numeric(length(fold_range))
+)
 
-# Set up cross-validation parameters
-set.seed(1) # Ensure reproducibility of folds
-n_folds <- 5
-# Store accuracy for each fold
-DAaccuracy_list <- numeric(n_folds) 
-KNNaccuracy_list <- numeric(n_folds)
-RFaccuracy_list <- numeric(n_folds)
-# Create folds for each class (human and GPTM)
-folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
-folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
-
-# Perform 5-fold cross-validation
-for (fold in 1:n_folds) {
-  # Training and testing data split for human samples
-  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
-  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+# Loop through each fold count (from 5 to 10)
+for (f in 1:length(fold_range)) {
+  n_folds <- fold_range[f]
   
-  # Training and testing data split for GPTM samples
-  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
-  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  # Initialize accuracy lists for each method
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
   
-  # Combine training and test sets
-  train_fold <- list(train_human, train_gptm)
-  test_fold <- rbind(test_human, test_gptm)
+  # Create folds for each class (human and GPTM)
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
   
-  # Create ground truth for the test set
-  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  # Perform cross-validation
+  for (fold in 1:n_folds) {
+    # Split data for human samples
+    train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+    test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+    
+    # Split data for GPTM samples
+    train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training and test sets
+    train_fold <- list(train_human, train_gptm)
+    test_fold <- rbind(test_human, test_gptm)
+    
+    # Create ground truth for the test set
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    
+    # Train and predict using different methods
+    predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+    predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+    predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+    
+    # Calculate accuracy for the fold
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  }
   
-  # Train and predict using discriminant analysis
-  predsDA_fold <- discriminantCorpus(train_fold, test_fold)
-  predsKNN_fold <- KNNCorpus(train_fold, test_fold)
-  predsRF_fold <- randomForestCorpus(train_fold, test_fold)
-  # Calculate accuracy for the fold
-  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
-  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
-  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  # Store mean accuracy for the current fold count
+  accuracy_table$DA_accuracy[f] <- mean(DAaccuracy_list)
+  accuracy_table$KNN_accuracy[f] <- mean(KNNaccuracy_list)
+  accuracy_table$RF_accuracy[f] <- mean(RFaccuracy_list)
 }
 
-# Average accuracy across all folds
-DAmean_accuracy <- mean(DAaccuracy_list)
-DAmean_accuracy
-KNNmean_accuracy <- mean(KNNaccuracy_list)
-KNNmean_accuracy
-RFmean_accuracy <- mean(RFaccuracy_list)
-RFmean_accuracy
- 
+# Print the accuracy table
+print(accuracy_table)
 
 
 
+# Plotting the accuracy table using ggplot2
+accuracy_long <- tidyr::pivot_longer(
+  accuracy_table,
+  cols = c("DA_accuracy", "KNN_accuracy", "RF_accuracy"),
+  names_to = "Method",
+  values_to = "Accuracy"
+)
 
+# Rename methods for better readability
+accuracy_long$Method <- factor(
+  accuracy_long$Method,
+  levels = c("DA_accuracy", "KNN_accuracy", "RF_accuracy"),
+  labels = c("Discriminant Analysis", "KNN", "Random Forest")
+)
 
+# Create the plot
 
-
+ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
+  geom_line(linewidth = 0.5) +
+  geom_point(size = 3, alpha = 0.6) +
+  labs(
+    title = "Accuracy of Different Models across Varying Number of Folds",
+    x = "Number of Folds",
+    y = "Accuracy",
+    color = "Method"
+  ) +
+  scale_x_continuous(breaks = fold_range) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    legend.position = c(0.5, 0.5), # Updated position argument
+    legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
+  )
 
 
 
@@ -248,4 +290,56 @@ DA_random_accuracy
 # KNN 
 KNN_random_accuracy <- sum(predsKNN_random1==truth_random1)/length(truth_random1)
 KNN_random_accuracy
+
+
+
+# 简单版k-fold
+# Load required data
+train_random <- combined_q1$features
+
+# Set up cross-validation parameters
+set.seed(1) # Ensure reproducibility of folds
+n_folds <- 5
+# Store accuracy for each fold
+DAaccuracy_list <- numeric(n_folds) 
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+  
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  
+  # Combine training and test sets
+  train_fold <- list(train_human, train_gptm)
+  test_fold <- rbind(test_human, test_gptm)
+  
+  # Create ground truth for the test set
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+  predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+  predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+  # Calculate accuracy for the fold
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+}
+
+# Average accuracy across all folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+DAmean_accuracy
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+KNNmean_accuracy
+RFmean_accuracy <- mean(RFaccuracy_list)
+RFmean_accuracy
 
