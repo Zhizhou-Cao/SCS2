@@ -112,75 +112,60 @@ kable(accuracy_table)
 
 
 
-# K-Fold (没做出来)
+# K-Fold 
 
-k <-3 # k value for k-nearest neighbours
-numfolds <- 5 # Number of fold for validation
-folds <- createFolds(combined_q1$features, k=numfolds)
-accuracies <- numeric(numfolds)
+# Load required data
+train_random <- combined_q1$features
 
-# Initialize empty vectors for predictions and true labels
-predsDA_KFold <- NULL
-predsKNN_KFold <- NULL
-predsRF_KFold <- NULL
-truth_KFold <- NULL
+# Set up cross-validation parameters
+set.seed(1) # Ensure reproducibility of folds
+n_folds <- 5
+# Store accuracy for each fold
+DAaccuracy_list <- numeric(n_folds) 
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
 
-for (i in 1:numfolds) {
-  # Define training and test sets
-  test_indices <- folds[[i]]
-  train_indices <- setdiff(seq_along(combined_q1$features), test_indices)
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
   
-  # Extract features for training and testing
-  train_features <- combined_q1$features[train_indices]
-  test_features <- combined_q1$features[test_indices]
-  test_truth <- rep(seq_along(test_indices), length(test_indices))
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
   
-  # Predictions for each model
-  predDA <- discriminantCorpus(train_features, test_features)
-  predKNN <- KNNCorpus(train_features, test_features)
-  predRF <- randomForestCorpus(train_features, test_features)
+  # Combine training and test sets
+  train_fold <- list(train_human, train_gptm)
+  test_fold <- rbind(test_human, test_gptm)
   
-  # Store predictions and true labels
-  predsDA_KFold <- c(predsDA_KFold, predDA)
-  predsKNN_KFold <- c(predsKNN_KFold, predKNN)
-  predsRF_KFold <- c(predsRF_KFold, predRF)
-  truth_KFold <- c(truth_KFold, test_truth)
+  # Create ground truth for the test set
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+  predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+  predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+  # Calculate accuracy for the fold
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
 }
 
-# Calculate accuracy for each model
-DA_KFold_accuracy <- sum(predsDA_KFold == truth_KFold) / length(truth_KFold)
-KNN_KFold_accuracy <- sum(predsKNN_KFold == truth_KFold) / length(truth_KFold)
-RF_KFold_accuracy <- sum(predsRF_KFold == truth_KFold) / length(truth_KFold)
-
-
+# Average accuracy across all folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+DAmean_accuracy
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+KNNmean_accuracy
+RFmean_accuracy <- mean(RFaccuracy_list)
+RFmean_accuracy
  
 
 
 
-# Define the number of folds
-k <- 5  # You can adjust this based on the dataset size and computational power
-folds <- createFolds(combined_q1$features, k = k)
-accuracies <- numeric(k)
-# Initialize empty vectors for predictions and true labels
-predsDA_KFold <- NULL
-predsKNN_KFold <- NULL
-predsRF_KFold <- NULL
-truth_KFold <- NULL
-
-# Loop through each fold
-for (i in 1:k) {
-  traindata <- combined_q1[-folds[[i]],-5]
-  trainlabels <- combined_q1[-folds[[i]],5]
-  testdata <- combined_q1[folds[[i]],-5]
-  testlabels <- combined_q1[folds[[i]],5]
-  predKNN <- KNNCorpus(traindata,testdata)
-  accuracies[i] <- mean(preds==testlabels)
-}
-
-# Calculate accuracy for each model
-DA_KFold_accuracy <- sum(predsDA_KFold == truth_KFold) / length(truth_KFold)
-KNN_KFold_accuracy <- sum(predsKNN_KFold == truth_KFold) / length(truth_KFold)
-RF_KFold_accuracy <- sum(predsRF_KFold == truth_KFold) / length(truth_KFold)
 
 
 
