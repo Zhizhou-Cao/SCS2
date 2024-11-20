@@ -49,6 +49,7 @@ for (i in 1:length(train_random)){
   predsKNN_random <- KNNCorpus(train_random, test_random)
   predsRF_random <- randomForestCorpus(train_random, test_random) 
 }
+
 # Multinomial (more than two categories) discriminant analysis
 DA_random_accuracy <- sum(predsDA_random==truth_random)/length(truth_random)
 DA_random_accuracy
@@ -58,8 +59,6 @@ KNN_random_accuracy
 # Random Forest
 predsRF_random_accuracy <- sum(predsRF_random==truth_random)/length(truth_random)
 predsRF_random_accuracy
-
-
 
 
 # leave-one cross validation
@@ -98,8 +97,8 @@ KNN_LOOCV_accuracy <-sum(predsKNN_LOOCV==truth_LOOCV)/length(truth_LOOCV)
 KNN_LOOCV_accuracy
 # RF
 RF_LOOCV_accuracy <-sum(predsRF_LOOCV==truth_LOOCV)/length(truth_LOOCV)
-RF_LOOCV_accuracy
 
+RF_LOOCV_accuracy
 
 
 # Present the accuracy in table

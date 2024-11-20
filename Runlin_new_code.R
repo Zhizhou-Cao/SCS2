@@ -182,6 +182,13 @@ combined_1000 <- list(
   authornames = c("human", "GPT"))
 
 
+# original
+combined_q1 <- list(
+  features = list(
+    human = humanM$features,
+    GPTM = GPTM$features),
+  authornames = c("human", "GPT"))
+
 
 # Random select cross validation
 train_random_500 <- combined_500$features
@@ -192,6 +199,7 @@ test_random_750 <- combined_750$features
 test_random_1000 <- combined_1000$features
 test_random <- NULL
 truth_random <- NULL
+
 
 train_random <- train_random_500
 for (i in 1:length(train_random)){
@@ -233,4 +241,129 @@ randomeselect_results_KNN <- as.table(randomeselect_results)
 randomeselect_results_KNN[1, 1] <- 0.4722222  #[row,column]
 #view table 
 randomeselect_results_KNN
+
+
+
+
+
+# K-Fold (by CZZ)
+combined_500 <- list(
+  features = list(
+    human = reducedhumanfeatures_500,
+    GPTM = reducedGPTfeatures_500),
+  authornames = c("human", "GPT"))
+
+combined_750 <- list(
+  features = list(
+    human = reducedhumanfeatures_750,
+    GPTM = reducedGPTfeatures_750),
+  authornames = c("human", "GPT"))
+
+combined_1000 <- list(
+  features = list(
+    human = reducedhumanfeatures_1000,
+    GPTM = reducedGPTfeatures_1000),
+  authornames = c("human", "GPT"))
+
+# Define the function
+evaluate_models <- function(trainset, testset, n_folds = 5) {
+  # Set up cross-validation parameters
+  set.seed(1)  # Ensure reproducibility
+  
+  # Initialize accuracy lists
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
+  
+  # Create folds for cross-validation
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(trainset$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(trainset$GPTM)))
+  
+  # Perform cross-validation
+  for (fold in 1:n_folds) {
+    # Training and testing split for human samples
+    train_human <- trainset$human[folds_human != fold, , drop = FALSE]
+    test_human <- testset$human[folds_human == fold, , drop = FALSE]
+    
+    # Training and testing split for GPTM samples
+    train_gptm <- trainset$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- testset$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training and test sets
+    train_fold <- list(train_human, train_gptm)
+    test_fold <- rbind(test_human, test_gptm)
+    
+    # Create ground truth for the test set
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    
+    # Train and predict using the models
+    predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+    predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+    predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+    
+    # Calculate accuracy for each model
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  }
+  
+  # Calculate mean accuracy across all folds
+  DA_mean_accuracy <- mean(DAaccuracy_list)
+  KNN_mean_accuracy <- mean(KNNaccuracy_list)
+  RF_mean_accuracy <- mean(RFaccuracy_list)
+  
+  # Return the accuracies
+  return(list(
+    DA_accuracy = DA_mean_accuracy,
+    KNN_accuracy = KNN_mean_accuracy,
+    RF_accuracy = RF_mean_accuracy
+  ))
+}
+# Example usage of the function
+results <- evaluate_models(trainset = combined_1000$features, testset = combined_1000$features)
+print(results)
+
+# Define the trainsets and testsets
+trainsets <- list(combined_500$features, combined_750$features, combined_1000$features)
+testsets <- list(combined_500$features, combined_750$features, combined_1000$features)
+
+# Initialize matrices for each method
+DA_matrix <- matrix(0, nrow = 3, ncol = 3, 
+                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
+                                    c("Test-500", "Test-750", "Test-1000")))
+
+KNN_matrix <- matrix(0, nrow = 3, ncol = 3, 
+                     dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
+                                     c("Test-500", "Test-750", "Test-1000")))
+
+RF_matrix <- matrix(0, nrow = 3, ncol = 3, 
+                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
+                                    c("Test-500", "Test-750", "Test-1000")))
+
+# Loop over trainsets and testsets
+for (i in 1:length(trainsets)) {
+  for (j in 1:length(testsets)) {
+    # Evaluate the models
+    results <- evaluate_models(trainsets[[i]], testsets[[j]])
+    
+    # Store results in respective matrices
+    DA_matrix[i, j] <- results$DA_accuracy
+    KNN_matrix[i, j] <- results$KNN_accuracy
+    RF_matrix[i, j] <- results$RF_accuracy
+  }
+}
+
+# Print the matrices
+print("DA Accuracy Matrix:")
+print(DA_matrix)
+
+print("KNN Accuracy Matrix:")
+print(KNN_matrix)
+
+print("RF Accuracy Matrix:")
+print(RF_matrix)
+
+
+#
+
 
