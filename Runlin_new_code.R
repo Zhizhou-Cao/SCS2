@@ -412,8 +412,8 @@ GPTfeatures_without_story <- GPTM$features[[topic]]
 
 combined_without_story <- list(
   features = list(
-    human = humanfeatures_story,
-    GPTM = GPTfeatures_story),
+    human = humanfeatures_without_story,
+    GPTM = GPTfeatures_without_story),
   authornames = c("human", "GPT"))
 
 
