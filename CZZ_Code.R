@@ -238,13 +238,12 @@ if (length(Architecture_index) > 0) {
 # Create a new list for Q3.1
 Architecture <- list(
   features = list(
-    humanM_Q31 = humanM_Q31$features,
-    GPTM_Q31 = GPTM_Q31$features),
+    human = humanM_Q31$features,
+    GPTM = GPTM_Q31$features),
   authornames = c("human", "GPT"))
 
-Architecture$features$GPTM_Q31 <- do.call(rbind, Architecture$features$GPTM_Q31)
-Architecture$features$humanM_Q31 <- do.call(rbind, Architecture$features$humanM_Q31)
-
+Architecture$features$human <- do.call(rbind, Architecture$features$human)
+Architecture$features$GPTM <- do.call(rbind, Architecture$features$GPTM)
 
 # 简单版k-fold
 # Load required data
@@ -282,6 +281,7 @@ for (fold in 1:n_folds) {
   predsDA_fold <- discriminantCorpus(train_fold, test_fold)
   predsKNN_fold <- KNNCorpus(train_fold, test_fold)
   predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+  
   # Calculate accuracy for the fold
   DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
   KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
