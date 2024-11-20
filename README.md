@@ -17,8 +17,9 @@ Q2. 测试不同模型在不同数据集的表现
 
 Q3. two models(train: 1.whole train set/ 2.except "Architecture").  test set always Architecture
   1. train: 纯"Architecture"; test: "Architecture"
-  2. train: 全部剩下 + "Architecture"; test: "Architecture"
-  3. train: 全部剩下 ; test: "Architecture"
+  2. train: 全部剩下 ; test: "Architecture"
+  3. train: 全部剩下 + "Architecture"; test: "Architecture"
+  
   
 Q4. [undecided] small function words
 

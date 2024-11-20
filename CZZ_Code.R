@@ -216,7 +216,69 @@ ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
 
 
 
-# Q2----
+# Q3----
+
+# Model 1 train: 纯"Architecture"; test: "Architecture"
+humanM$authornames <- rep(0, length(humanM$authornames))
+GPTM$authornames <- rep(1, length(GPTM$authornames))
+
+humanM_Q31 <- humanM
+GPTM_Q31 <- GPTM
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM_Q31$booknames, function(x) any(grepl("Architecture", x))))
+if (length(Architecture_index) > 0) {
+  humanM_Q31$booknames <- humanM_Q31$booknames[Architecture_index]
+  humanM_Q31$features <- humanM_Q31$features[Architecture_index]
+  humanM_Q31$authornames <- humanM_Q31$authornames[Architecture_index]
+  
+  GPTM_Q31$booknames <- GPTM_Q31$booknames[Architecture_index]
+  GPTM_Q31$features <- GPTM_Q31$features[Architecture_index]
+  GPTM_Q31$authornames <- GPTM_Q31$authornames[Architecture_index]}
+
+# Create a new list for Q3.1
+Architecture <- list(
+  features = list(
+    humanM_Q31 = humanM_Q31$features,
+    GPTM_Q31 = GPTM_Q31$features),
+  authornames = c("human", "GPT"))
+
+Architecture$features$GPTM_Q31 <- do.call(rbind, Architecture$features$GPTM_Q31)
+Architecture$features$humanM_Q31 <- do.call(rbind, Architecture$features$humanM_Q31)
+
+
+
+
+
+# Model 2 train: 全部剩下 + "Architecture"; test: "Architecture"
+humanM$authornames <- rep(0, length(humanM$authornames))
+GPTM$authornames <- rep(1, length(GPTM$authornames))
+
+humanM_Q32 <- humanM
+GPTM_Q32 <- GPTM
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM_Q32$booknames, function(x) any(grepl("Architecture", x))))
+if (length(Architecture_index) > 0) {
+  humanM_Q32$booknames <- humanM_Q32$booknames[-Architecture_index]
+  humanM_Q32$features <- humanM_Q32$features[-Architecture_index]
+  humanM_Q32$authornames <- humanM_Q32$authornames[-Architecture_index]
+  
+  GPTM_Q32$booknames <- GPTM_Q32$booknames[-Architecture_index]
+  GPTM_Q32$features <- GPTM_Q32$features[-Architecture_index]
+  GPTM_Q32$authornames <- GPTM_Q32$authornames[-Architecture_index]}
+
+# Create a new list for Q3.1
+WithoutArchitecture <- list(
+  features = list(
+    humanM_Q32 = humanM_Q32$features,
+    GPTM_Q32 = GPTM_Q32$features),
+  authornames = c("human", "GPT"))
+
+WithoutArchitecture$features$GPTM_Q32 <- do.call(rbind, WithoutArchitecture$features$GPTM_Q32)
+WithoutArchitecture$features$humanM_Q32 <- do.call(rbind, WithoutArchitecture$features$humanM_Q32)
+
+
+
+
 
 
 
@@ -347,4 +409,5 @@ KNNmean_accuracy <- mean(KNNaccuracy_list)
 KNNmean_accuracy
 RFmean_accuracy <- mean(RFaccuracy_list)
 RFmean_accuracy
+
 
