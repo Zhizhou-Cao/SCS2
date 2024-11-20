@@ -54,3 +54,6 @@ KNN_LOOCV_accuracy <-sum(KNN_pred==authornames)/length(authornames)
 KNN_LOOCV_accuracy
 
 
+
+
+

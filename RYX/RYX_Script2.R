@@ -59,31 +59,31 @@ KNN_random_accuracy
 
 
 
-# leave-one cross validation
-train_LOOCV <- combined_q1$features
-features <- combined_q1$features
-test_LOOCV <- NULL
-truth_LOOCV <- NULL
-predsDA_LOOCV <- NULL
-predsKNN_LOOCV <- NULL
-predsRF_LOOCV <- NULL
-for (i in 1:length(train_LOOCV)) {
-  for (j in 1:nrow(train_LOOCV[[i]])) {
-    test_LOOCV <- matrix(features[[i]][j,],nrow=1)
-    train_LOOCV <- features
-    train_LOOCV[[i]] <- train_LOOCV[[i]][-j,,drop=FALSE]
-    
-    pred <- discriminantCorpus(train_LOOCV, test_LOOCV)
-    predsDA_LOOCV <- c(predsDA_LOOCV, pred)
-    
-    pred <- KNNCorpus(train_LOOCV, test_LOOCV)
-    predsKNN_LOOCV <- c(predsKNN_LOOCV, pred)
-    
-    pred <- randomForestCorpus(train_LOOCV, test_LOOCV)
-    predsRF_LOOCV <- c(predsRF_LOOCV, pred)
-    
-    truth_LOOCV <- c(truth_LOOCV, i)
-  }}
+# # leave-one cross validation
+# train_LOOCV <- combined_q1$features
+# features <- combined_q1$features
+# test_LOOCV <- NULL
+# truth_LOOCV <- NULL
+# predsDA_LOOCV <- NULL
+# predsKNN_LOOCV <- NULL
+# predsRF_LOOCV <- NULL
+# for (i in 1:length(train_LOOCV)) {
+#   for (j in 1:nrow(train_LOOCV[[i]])) {
+#     test_LOOCV <- matrix(features[[i]][j,],nrow=1)
+#     train_LOOCV <- features
+#     train_LOOCV[[i]] <- train_LOOCV[[i]][-j,,drop=FALSE]
+#     
+#     pred <- discriminantCorpus(train_LOOCV, test_LOOCV)
+#     predsDA_LOOCV <- c(predsDA_LOOCV, pred)
+#     
+#     pred <- KNNCorpus(train_LOOCV, test_LOOCV)
+#     predsKNN_LOOCV <- c(predsKNN_LOOCV, pred)
+#     
+#     pred <- randomForestCorpus(train_LOOCV, test_LOOCV)
+#     predsRF_LOOCV <- c(predsRF_LOOCV, pred)
+#     
+#     truth_LOOCV <- c(truth_LOOCV, i)
+#   }}
 
 # Multinomial (more than two categories) discriminant analysis
 DA_LOOCV_accuracy <- sum(predsDA_LOOCV==truth_LOOCV)/length(truth_LOOCV)
@@ -95,10 +95,13 @@ KNN_LOOCV_accuracy
 RF_LOOCV_accuracy <-sum(predsRF_LOOCV==truth_LOOCV)/length(truth_LOOCV)
 RF_LOOCV_accuracy
 
-# Present the accuracy in table
-accuracy_table <- data.frame(
-  "One random CV" = c(DA_random_accuracy, KNN_random_accuracy),
-  "LOOCV" = c(DA_LOOCV_accuracy, KNN_LOOCV_accuracy),
-  row.names = c("Discriminant Analysis", "K-Nearest Neighbors"))
-kable(accuracy_table)
+# # Present the accuracy in table
+# accuracy_table <- data.frame(
+#   "One random CV" = c(DA_random_accuracy, KNN_random_accuracy),
+#   "LOOCV" = c(DA_LOOCV_accuracy, KNN_LOOCV_accuracy),
+#   row.names = c("Discriminant Analysis", "K-Nearest Neighbors"))
+# kable(accuracy_table)
+
+
+
 
