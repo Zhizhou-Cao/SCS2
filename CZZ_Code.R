@@ -246,6 +246,65 @@ Architecture$features$GPTM_Q31 <- do.call(rbind, Architecture$features$GPTM_Q31)
 Architecture$features$humanM_Q31 <- do.call(rbind, Architecture$features$humanM_Q31)
 
 
+# 简单版k-fold
+# Load required data
+train_random <- Architecture$features
+
+# Set up cross-validation parameters
+set.seed(1) # Ensure reproducibility of folds
+n_folds <- 5
+# Store accuracy for each fold
+DAaccuracy_list <- numeric(n_folds) 
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+  
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  
+  # Combine training and test sets
+  train_fold <- list(train_human, train_gptm)
+  test_fold <- rbind(test_human, test_gptm)
+  
+  # Create ground truth for the test set
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+  predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+  predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+  # Calculate accuracy for the fold
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+}
+
+# Average accuracy across all folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+DAmean_accuracy
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+KNNmean_accuracy
+RFmean_accuracy <- mean(RFaccuracy_list)
+RFmean_accuracy
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -266,7 +325,7 @@ if (length(Architecture_index) > 0) {
   GPTM_Q32$features <- GPTM_Q32$features[-Architecture_index]
   GPTM_Q32$authornames <- GPTM_Q32$authornames[-Architecture_index]}
 
-# Create a new list for Q3.1
+# Create a new list for Q3.2
 WithoutArchitecture <- list(
   features = list(
     humanM_Q32 = humanM_Q32$features,
@@ -276,8 +335,10 @@ WithoutArchitecture <- list(
 WithoutArchitecture$features$GPTM_Q32 <- do.call(rbind, WithoutArchitecture$features$GPTM_Q32)
 WithoutArchitecture$features$humanM_Q32 <- do.call(rbind, WithoutArchitecture$features$humanM_Q32)
 
-
-
+# Train and predict using discriminant analysis
+predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+predsRF_fold <- randomForestCorpus(train_fold, test_fold)
 
 
 
