@@ -5,7 +5,7 @@ library(class)
 library(caret)
 library(knitr)
 library(randomForest)
-source("stylometryfunctions.R")
+source("stylometryfunctions.R") 
 source("reducewords.R")
 
 humanM <- loadCorpus("functionwords/functionwords/humanfunctionwords/","functionwords")
