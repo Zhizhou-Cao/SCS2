@@ -216,6 +216,12 @@ ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
 
 
 
+# Q2----
+
+
+
+
+
 
 
 
