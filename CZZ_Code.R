@@ -328,12 +328,12 @@ if (length(Architecture_index) > 0) {
 # Create a new list for Q3.2
 WithoutArchitecture <- list(
   features = list(
-    humanM_Q32 = humanM_Q32$features,
-    GPTM_Q32 = GPTM_Q32$features),
+    humanM = humanM_Q32$features,
+    GPTM = GPTM_Q32$features),
   authornames = c("human", "GPT"))
 
-WithoutArchitecture$features$GPTM_Q32 <- do.call(rbind, WithoutArchitecture$features$GPTM_Q32)
-WithoutArchitecture$features$humanM_Q32 <- do.call(rbind, WithoutArchitecture$features$humanM_Q32)
+WithoutArchitecture$features$GPTM <- do.call(rbind, WithoutArchitecture$features$GPTM)
+WithoutArchitecture$features$humanM <- do.call(rbind, WithoutArchitecture$features$humanM)
 
 # Train and predict using discriminant analysis
 predsDA_fold <- discriminantCorpus(train_fold, test_fold)
