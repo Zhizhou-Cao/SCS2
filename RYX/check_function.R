@@ -286,22 +286,11 @@ RFmean_accuracy
 humanM$authornames <- rep(0, length(humanM$authornames))
 GPTM$authornames <- rep(1, length(GPTM$authornames))
 
-humanM_Q32 <- humanM
-GPTM_Q32 <- GPTM
 # Identify the index of the "Architecture" folder in booknames
-Architecture_index <- which(sapply(humanM_Q32$booknames, function(x) any(grepl("Architecture", x))))
-Stories_index <- which(sapply(humanM_Q32$booknames, function(x) any(grepl("Stories and literature", x))))
+Architecture_index <- which(sapply(humanM $booknames, function(x) any(grepl("Architecture", x))))
+Stories_index <- which(sapply(humanM$booknames, function(x) any(grepl("Stories and literature", x))))
 
-if (length(Architecture_index) > 0) {
-  humanM_Q32$booknames <- humanM_Q32$booknames[-Architecture_index]
-  humanM_Q32$features <- humanM_Q32$features[-Architecture_index]
-  humanM_Q32$authornames <- humanM_Q32$authornames[-Architecture_index]
-  
-  GPTM_Q32$booknames <- GPTM_Q32$booknames[-Architecture_index]
-  GPTM_Q32$features <- GPTM_Q32$features[-Architecture_index]
-  GPTM_Q32$authornames <- GPTM_Q32$authornames[-Architecture_index]}
-
-#### Define a function to compute the standard deviation for each position 找sd
+# Define a function to compute the standard deviation for each position 找sd
 compute_sd_per_position <- function(features_list) {
   # Combine all matrices in the list by stacking them row-wise into a single matrix
   combined_matrix <- do.call(rbind, features_list)
@@ -311,11 +300,11 @@ compute_sd_per_position <- function(features_list) {
 }
 
 # Calculate the standard deviation for each position in GPT and Human data
-gpt_sd_Arch <- compute_sd_per_position(GPTM_Q32$features[Architecture_index])
-human_sd_Arch <- compute_sd_per_position(humanM_Q32$features[Architecture_index])
+gpt_sd_Arch <- compute_sd_per_position(GPTM$features[Architecture_index])
+human_sd_Arch <- compute_sd_per_position(humanM$features[Architecture_index])
 
-gpt_sd_Story <- compute_sd_per_position(GPTM_Q32$features[Stories_index])
-human_sd_Story <- compute_sd_per_position(humanM_Q32$features[Stories_index])
+gpt_sd_Story <- compute_sd_per_position(GPTM$features[Stories_index])
+human_sd_Story <- compute_sd_per_position(humanM$features[Stories_index])
 
 cat("GPT SD for Architecture:", paste(round(gpt_sd_Arch, 2), collapse = " "), "\n")
 cat("Human SD for Architecture:", paste(round(human_sd_Arch, 2), collapse = " "), "\n")
