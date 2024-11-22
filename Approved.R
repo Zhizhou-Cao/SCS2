@@ -15,11 +15,315 @@ GPTM <- loadCorpus("functionwords/functionwords/GPTfunctionwords/","functionword
 humanM$authornames <- rep(0, length(humanM$authornames))
 GPTM$authornames <- rep(1, length(GPTM$authornames))
 
+
+# Q1 ----
 # Create a new list for Q1
 combined_q1 <- list(
   features = list(
     human = humanM$features,
-    GPTM = GPTM$features
-  ),
-  authornames = c(0, 1)
+    GPTM = GPTM$features),
+  authornames = c(0, 1))
+
+combined_q1$features$GPTM <- do.call(rbind, combined_q1$features$GPTM)
+combined_q1$features$human <- do.call(rbind, combined_q1$features$human)
+
+# K-Fold iteration for four methods
+
+# Set up parameters
+set.seed(1) # Ensure reproducibility
+fold_range <- 3:10 # Range of folds to test
+
+train_features <- combined_q1$features
+
+accuracy_table <- data.frame(
+  n_folds = fold_range,
+  DA_accuracy = numeric(length(fold_range)),
+  KNN_accuracy = numeric(length(fold_range)),
+  RF_accuracy = numeric(length(fold_range)),
+  SVM_accuracy = numeric(length(fold_range)))
+
+
+# Loop through each fold count (from 3 to 10)
+for (f in 1:length(fold_range)) {
+  n_folds <- fold_range[f]
+  
+  # Initialize accuracy lists for each method
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
+  SVMaccuracy_list <- numeric(n_folds) # For SVM
+  
+  # Create folds for each class (human and GPTM)
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(train_features$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_features$GPTM)))
+  
+  # Perform cross-validation
+  for (fold in 1:n_folds) {
+    # Split data for human samples
+    train_human <- train_features$human[folds_human != fold, , drop = FALSE]
+    test_human <- train_features$human[folds_human == fold, , drop = FALSE]
+    
+    # Split data for GPTM samples
+    train_gptm <- train_features$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- train_features$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training sets and labels
+    train_fold <- rbind(train_human, train_gptm)
+    train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+    
+    # Combine test sets
+    test_fold <- rbind(test_human, test_gptm)
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    
+    # Train and predict using different methods
+    predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+    predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+    predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+    
+    # Train and predict using SVM
+    svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+    svm_preds <- predict(svm_model, test_fold)
+    
+    # Calculate accuracy for each method
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+    SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+  }
+  
+  # Store mean accuracy for the current fold count
+  accuracy_table$DA_accuracy[f] <- mean(DAaccuracy_list)
+  accuracy_table$KNN_accuracy[f] <- mean(KNNaccuracy_list)
+  accuracy_table$RF_accuracy[f] <- mean(RFaccuracy_list)
+  accuracy_table$SVM_accuracy[f] <- mean(SVMaccuracy_list)
+}
+
+# Print the accuracy table
+kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
+
+# Visualisation
+# Plotting the accuracy table using ggplot2
+accuracy_long <- tidyr::pivot_longer(
+  accuracy_table,
+  cols = c("DA_accuracy", "KNN_accuracy", "RF_accuracy", "SVM_accuracy"),
+  names_to = "Method",
+  values_to = "Accuracy"
 )
+
+# Rename methods for better readability
+accuracy_long$Method <- factor(
+  accuracy_long$Method,
+  levels = c("DA_accuracy", "KNN_accuracy", "RF_accuracy", "SVM_accuracy"),
+  labels = c("Discriminant Analysis", "KNN", "Random Forest", "Support Vector Machine")
+)
+
+# Create the plot
+
+ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
+  geom_line(linewidth = 0.5) +
+  geom_point(size = 3, alpha = 0.6) +
+  labs(
+    title = "Accuracy of Different Models across Varying Number of Folds",
+    x = "Number of Folds",
+    y = "Accuracy",
+    color = "Method"
+  ) +
+  scale_x_continuous(breaks = fold_range) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    legend.position = c(0.5, 0.5), # Updated position argument
+    legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
+    )
+
+
+# Q2 -----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Q3 -----
+
+# Q3.1 -----
+# Select twp topics(Architecture/ Stories and literature) for modelling
+
+# Stories and Literature
+humanM_Q31 <- humanM
+GPTM_Q31 <- GPTM
+# Identify the index of the "Stories and literature" folder in booknames
+StoryLit_index <- which(sapply(humanM_Q31$booknames, function(x) any(grepl("Stories and literature", x))))
+if (length(StoryLit_index) > 0) {
+  humanM_Q31$features <- humanM_Q31$features[StoryLit_index]
+  GPTM_Q31$features <- GPTM_Q31$features[StoryLit_index]}
+
+# Create a new list for Q3.1
+StoryLit <- list(
+  features = list(
+    human = humanM_Q31$features,
+    GPTM = GPTM_Q31$features),
+  authornames = c("human", "GPT"))
+StoryLit$features$human <- do.call(rbind, StoryLit$features$human)
+StoryLit$features$GPTM <- do.call(rbind, StoryLit$features$GPTM)
+
+# K-fold CV & 4 Methods (same as Q1)
+# Load required data
+train_random <- StoryLit$features
+# Set up cross-validation parameters
+set.seed(1) # Ensure reproducibility of folds
+n_folds <- 5 # KNN has greatest accuracy
+
+# Initialize accuracy lists for each method
+DAaccuracy_list <- numeric(n_folds)
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+SVMaccuracy_list <- numeric(n_folds) # For SVM
+
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+  
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  
+  # Combine training sets
+  train_fold <- rbind(train_human, train_gptm)
+  train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+  
+  # Combine test sets
+  test_fold <- rbind(test_human, test_gptm)
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using KNN
+  predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using Random Forest
+  predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using SVM
+  svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+  svm_preds <- predict(svm_model, test_fold)
+  SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+}
+
+# Calculate average accuracy for all methods across folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+RFmean_accuracy <- mean(RFaccuracy_list)
+SVMmean_accuracy <- mean(SVMaccuracy_list)
+
+# Create a table of the results
+accuracy_table_3.1 <- data.frame(
+  Method = c("DA", "KNN", "Random Forest", "SVM"),
+  Average_Accuracy = c(DAmean_accuracy, KNNmean_accuracy, RFmean_accuracy, SVMmean_accuracy)
+)
+
+# Print the table
+kable(accuracy_table_3.1, caption = "Average Accuracy Across Methods", format = "markdown")
+
+
+
+
+# Architecture
+humanM_Q31 <- humanM
+GPTM_Q31 <- GPTM
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM_Q31$booknames, function(x) any(grepl("Architecture", x))))
+if (length(Architecture_index) > 0) {
+  humanM_Q31$features <- humanM_Q31$features[Architecture_index]
+  GPTM_Q31$features <- GPTM_Q31$features[Architecture_index]}
+
+# Create a new list for Q3.1
+Architecture <- list(
+  features = list(
+    human = humanM_Q31$features,
+    GPTM = GPTM_Q31$features),
+  authornames = c("human", "GPT"))
+Architecture$features$human <- do.call(rbind, Architecture$features$human)
+Architecture$features$GPTM <- do.call(rbind, Architecture$features$GPTM)
+
+# Exist Error, Explain here!!!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Q3.2 ----
+# Used trained model(without 'StoryLit') to test StoryLit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Q3.3 -----
+# 
+
+
+
+
+
+
+
+
+
+
+# Q4 ------
+# Reduced Words
+
+
+
+
+
+
+
+
+
+
+
+
+
