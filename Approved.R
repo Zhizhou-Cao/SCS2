@@ -1,4 +1,4 @@
-# 谨慎修改代码！！！
+
 # Import Libraries
 library(ggplot2)
 library(lattice)
@@ -302,18 +302,26 @@ simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
     DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
     KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
     RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+    
+    # SVM method
+    svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+    svm_preds <- predict(svm_model, test_fold)
+    SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
   }
+  
+
   
   # Calculate mean accuracy across all folds
   DA_mean_accuracy <- mean(DAaccuracy_list)
   KNN_mean_accuracy <- mean(KNNaccuracy_list)
   RF_mean_accuracy <- mean(RFaccuracy_list)
-  
+  SVM_mean_accuracy <- mean(SVMaccuracy_list)
   # Return the accuracies
   return(list(
     DA_accuracy = DA_mean_accuracy,
     KNN_accuracy = KNN_mean_accuracy,
-    RF_accuracy = RF_mean_accuracy
+    RF_accuracy = RF_mean_accuracy,
+    SVM_accuracy = SVM_mean_accuracy
   ))
 }
 # Example usage of the function
@@ -336,6 +344,9 @@ KNN_matrix <- matrix(0, nrow = 3, ncol = 3,
 RF_matrix <- matrix(0, nrow = 3, ncol = 3, 
                     dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
                                     c("Test-500", "Test-750", "Test-1000")))
+SVM_matrix <- matrix(0, nrow = 3, ncol = 3, 
+                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
+                                    c("Test-500", "Test-750", "Test-1000")))
 
 # Loop over trainsets and testsets
 for (i in 1:length(trainsets)) {
@@ -347,6 +358,7 @@ for (i in 1:length(trainsets)) {
     DA_matrix[i, j] <- results$DA_accuracy
     KNN_matrix[i, j] <- results$KNN_accuracy
     RF_matrix[i, j] <- results$RF_accuracy
+    SVM_matrix[i, j] <- results$SVM_accuracy
   }
 }
 
@@ -359,6 +371,9 @@ print(KNN_matrix)
 
 print("RF Accuracy Matrix:")
 print(RF_matrix)
+
+print("SVM Accuracy Matrix:")
+print(SVM_matrix)
 
 
 
