@@ -5,6 +5,7 @@ library(lattice)
 library(class)
 library(caret)
 library(knitr)
+library(e1071) # SVM
 
 source("stylometryfunctions.R")
 source("reducewords.R")
@@ -400,7 +401,37 @@ Architecture <- list(
 Architecture$features$human <- do.call(rbind, Architecture$features$human)
 Architecture$features$GPTM <- do.call(rbind, Architecture$features$GPTM)
 
+
+
 # Exist Error, Explain here!!!!!
+
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM $booknames, function(x) any(grepl("Architecture", x))))
+Stories_index <- which(sapply(humanM$booknames, function(x) any(grepl("Stories and literature", x))))
+
+# Define a function to compute the standard deviation for each position 找sd
+compute_sd_per_position <- function(features_list) {
+  # Combine all matrices in the list by stacking them row-wise into a single matrix
+  combined_matrix <- do.call(rbind, features_list)
+  
+  # Compute the standard deviation for each column (position)
+  apply(combined_matrix, 2, sd)
+}
+
+# Calculate the standard deviation for each position in GPT and Human data
+gpt_sd_Arch <- compute_sd_per_position(GPTM$features[Architecture_index])
+human_sd_Arch <- compute_sd_per_position(humanM$features[Architecture_index])
+
+gpt_sd_Story <- compute_sd_per_position(GPTM$features[Stories_index])
+human_sd_Story <- compute_sd_per_position(humanM$features[Stories_index])
+
+cat("GPT SD for Architecture:", paste(round(gpt_sd_Arch, 2), collapse = " "), "\n")
+cat("Human SD for Architecture:", paste(round(human_sd_Arch, 2), collapse = " "), "\n")
+
+cat("GPT SD for Stories:", paste(round(gpt_sd_Story, 2), collapse = " "), "\n")
+cat("Human SD for Stories:", paste(round(human_sd_Story, 2), collapse = " "), "\n")
+
+
 
 
 
