@@ -263,7 +263,7 @@ combined_1000 <- list(
   authornames = c("human", "GPT"))
 
 # Define the function
-evaluate_models <- function(trainset, testset, n_folds = 5) {
+simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
   # Set up cross-validation parameters
   set.seed(1)  # Ensure reproducibility
   
@@ -341,7 +341,7 @@ RF_matrix <- matrix(0, nrow = 3, ncol = 3,
 for (i in 1:length(trainsets)) {
   for (j in 1:length(testsets)) {
     # Evaluate the models
-    results <- evaluate_models(trainsets[[i]], testsets[[j]])
+    results <- simple_evaluate_model(trainsets[[i]], testsets[[j]])
     
     # Store results in respective matrices
     DA_matrix[i, j] <- results$DA_accuracy
