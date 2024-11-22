@@ -120,17 +120,14 @@ accuracy_table <- data.frame(
 # Loop through each fold count (from 3 to 10)
 for (f in 1:length(fold_range)) {
   n_folds <- fold_range[f]
-  
   # Initialize accuracy lists for each method
   DAaccuracy_list <- numeric(n_folds)
   KNNaccuracy_list <- numeric(n_folds)
   RFaccuracy_list <- numeric(n_folds)
   SVMaccuracy_list <- numeric(n_folds) # For SVM
-  
   # Create folds for each class (human and GPTM)
   folds_human <- sample(rep(1:n_folds, length.out = nrow(train_features$human)))
   folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_features$GPTM)))
-  
   # Perform cross-validation
   for (fold in 1:n_folds) {
     # Split data for human samples
@@ -164,7 +161,6 @@ for (f in 1:length(fold_range)) {
     RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
     SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
   }
-  
   # Store mean accuracy for the current fold count
   accuracy_table$DA_accuracy[f] <- mean(DAaccuracy_list)
   accuracy_table$KNN_accuracy[f] <- mean(KNNaccuracy_list)
@@ -271,7 +267,7 @@ simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
   DAaccuracy_list <- numeric(n_folds)
   KNNaccuracy_list <- numeric(n_folds)
   RFaccuracy_list <- numeric(n_folds)
-  
+  SVMaccuracy_list <- numeric(n_folds)
   # Create folds for cross-validation
   folds_human <- sample(rep(1:n_folds, length.out = nrow(trainset$human)))
   folds_gptm <- sample(rep(1:n_folds, length.out = nrow(trainset$GPTM)))
@@ -309,8 +305,6 @@ simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
     SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
   }
   
-
-  
   # Calculate mean accuracy across all folds
   DA_mean_accuracy <- mean(DAaccuracy_list)
   KNN_mean_accuracy <- mean(KNNaccuracy_list)
@@ -324,6 +318,7 @@ simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
     SVM_accuracy = SVM_mean_accuracy
   ))
 }
+
 # Example usage of the function
 #results <- evaluate_models(trainset = combined_1000$features, testset = combined_1000$features)
 #print(results)
