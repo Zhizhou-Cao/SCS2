@@ -17,7 +17,7 @@ humanM$authornames <- rep(0, length(humanM$authornames))
 GPTM$authornames <- rep(1, length(GPTM$authornames))
 
 # Evaluate Model----
-evaluate_model <- function(trainset, testset, fold_range = 3:10) {
+evaluate_model <- function(trainset, testset, fold_range = 5) {
   # Initialize accuracy table
   accuracy_table <- data.frame(
     n_folds = fold_range,
