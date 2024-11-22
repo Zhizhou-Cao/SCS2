@@ -104,14 +104,72 @@ combined_q1$features$human <- do.call(rbind, combined_q1$features$human)
 # K-Fold iteration for four methods
 
 # Set up parameters
+set.seed(1) # Ensure reproducibility
 fold_range <- 3:10 # Range of folds to test
 
-#K-Fold iteration for four methods
-fold_range <- 3:10 # fold number from 3 to 10
-accuracy_table <- evaluate_model(combined_q1$features, combined_q1$features, fold_range)
-# Print the accuracy table
-kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown" )
+train_features <- combined_q1$features
 
+accuracy_table <- data.frame(
+  n_folds = fold_range,
+  DA_accuracy = numeric(length(fold_range)),
+  KNN_accuracy = numeric(length(fold_range)),
+  RF_accuracy = numeric(length(fold_range)),
+  SVM_accuracy = numeric(length(fold_range)))
+
+
+# Loop through each fold count (from 3 to 10)
+for (f in 1:length(fold_range)) {
+  n_folds <- fold_range[f]
+  # Initialize accuracy lists for each method
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
+  SVMaccuracy_list <- numeric(n_folds) # For SVM
+  # Create folds for each class (human and GPTM)
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(train_features$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_features$GPTM)))
+  # Perform cross-validation
+  for (fold in 1:n_folds) {
+    # Split data for human samples
+    train_human <- train_features$human[folds_human != fold, , drop = FALSE]
+    test_human <- train_features$human[folds_human == fold, , drop = FALSE]
+    
+    # Split data for GPTM samples
+    train_gptm <- train_features$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- train_features$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training sets and labels
+    train_fold <- rbind(train_human, train_gptm)
+    train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+    
+    # Combine test sets
+    test_fold <- rbind(test_human, test_gptm)
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    
+    # Train and predict using different methods
+    predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+    predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+    predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+    
+    # Train and predict using SVM
+    svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+    svm_preds <- predict(svm_model, test_fold)
+    
+    # Calculate accuracy for each method
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+    SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+  }
+  # Store mean accuracy for the current fold count
+  accuracy_table$DA_accuracy[f] <- mean(DAaccuracy_list)
+  accuracy_table$KNN_accuracy[f] <- mean(KNNaccuracy_list)
+  accuracy_table$RF_accuracy[f] <- mean(RFaccuracy_list)
+  accuracy_table$SVM_accuracy[f] <- mean(SVMaccuracy_list)
+}
+
+# Print the accuracy table
+kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
 
 # Visualisation
 # Plotting the accuracy table using ggplot2
@@ -200,119 +258,108 @@ combined_1000 <- list(
     GPTM = reducedGPTfeatures_1000),
   authornames = c("human", "GPT"))
 
-# Define the function
-simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
-  # Set up cross-validation parameters
-  set.seed(1)  # Ensure reproducibility
+evaluate_model <- function(trainset, testset, fold_range = 5) {
+  # Initialize accuracy table
+  accuracy_table <- data.frame(
+    n_folds = fold_range,
+    DA_accuracy = numeric(length(fold_range)),
+    KNN_accuracy = numeric(length(fold_range)),
+    RF_accuracy = numeric(length(fold_range)),
+    SVM_accuracy = numeric(length(fold_range))
+  )
   
-  # Initialize accuracy lists
-  DAaccuracy_list <- numeric(n_folds)
-  KNNaccuracy_list <- numeric(n_folds)
-  RFaccuracy_list <- numeric(n_folds)
-  SVMaccuracy_list <- numeric(n_folds)
-  # Create folds for cross-validation
-  folds_human <- sample(rep(1:n_folds, length.out = nrow(trainset$human)))
-  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(trainset$GPTM)))
-  
-  # Perform cross-validation
-  for (fold in 1:n_folds) {
-    # Training and testing split for human samples
-    train_human <- trainset$human[folds_human != fold, , drop = FALSE]
-    test_human <- testset$human[folds_human == fold, , drop = FALSE]
+  for (f in 1:length(fold_range)) {
+    # Current number of folds
+    n_folds <- fold_range[f]
     
-    # Training and testing split for GPTM samples
-    train_gptm <- trainset$GPTM[folds_gptm != fold, , drop = FALSE]
-    test_gptm <- testset$GPTM[folds_gptm == fold, , drop = FALSE]
+    # Ensure reproducibility
+    set.seed(1)
     
-    # Combine training and test sets
-    train_fold <- list(train_human, train_gptm)
-    test_fold <- rbind(test_human, test_gptm)
+    # Initialize accuracy lists for each method
+    DAaccuracy_list <- numeric(n_folds)
+    KNNaccuracy_list <- numeric(n_folds)
+    RFaccuracy_list <- numeric(n_folds)
+    SVMaccuracy_list <- numeric(n_folds)
     
-    # Create ground truth for the test set
-    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    # Create folds for each class
+    folds_human <- sample(rep(1:n_folds, length.out = nrow(trainset$human)))
+    folds_gptm <- sample(rep(1:n_folds, length.out = nrow(trainset$GPTM)))
     
-    # Train and predict using the models
-    predsDA_fold <- discriminantCorpus(train_fold, test_fold)
-    predsKNN_fold <- KNNCorpus(train_fold, test_fold)
-    predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+    # Perform cross-validation
+    for (fold in 1:n_folds) {
+      # Split data for human samples
+      train_human <- trainset$human[folds_human != fold, , drop = FALSE]
+      test_human <- testset$human[folds_human == fold, , drop = FALSE]
+      
+      # Split data for GPTM samples
+      train_gptm <- trainset$GPTM[folds_gptm != fold, , drop = FALSE]
+      test_gptm <- testset$GPTM[folds_gptm == fold, , drop = FALSE]
+      
+      # Combine training sets and labels
+      train_fold <- rbind(train_human, train_gptm)
+      train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+      
+      # Combine test sets
+      test_fold <- rbind(test_human, test_gptm)
+      truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+      
+      # Train and predict using different methods
+      predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+      predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+      predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+      
+      # Train and predict using SVM
+      svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+      svm_preds <- predict(svm_model, test_fold)
+      
+      # Calculate accuracy for each method
+      DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+      KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+      RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+      SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+    }
     
-    # Calculate accuracy for each model
-    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
-    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
-    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
-    
-    # SVM method
-    svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
-    svm_preds <- predict(svm_model, test_fold)
-    SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+    # Store mean accuracy for the current fold count
+    accuracy_table$DA_accuracy[f] <- mean(DAaccuracy_list)
+    accuracy_table$KNN_accuracy[f] <- mean(KNNaccuracy_list)
+    accuracy_table$RF_accuracy[f] <- mean(RFaccuracy_list)
+    accuracy_table$SVM_accuracy[f] <- mean(SVMaccuracy_list)
   }
   
-  # Calculate mean accuracy across all folds
-  DA_mean_accuracy <- mean(DAaccuracy_list)
-  KNN_mean_accuracy <- mean(KNNaccuracy_list)
-  RF_mean_accuracy <- mean(RFaccuracy_list)
-  SVM_mean_accuracy <- mean(SVMaccuracy_list)
-  # Return the accuracies
-  return(list(
-    DA_accuracy = DA_mean_accuracy,
-    KNN_accuracy = KNN_mean_accuracy,
-    RF_accuracy = RF_mean_accuracy,
-    SVM_accuracy = SVM_mean_accuracy
-  ))
+  return(accuracy_table)
 }
 
-# Example usage of the function
-#results <- evaluate_models(trainset = combined_1000$features, testset = combined_1000$features)
-#print(results)
+results_matrices <- list()
 
-# Define the trainsets and testsets
 trainsets <- list(combined_500$features, combined_750$features, combined_1000$features)
 testsets <- list(combined_500$features, combined_750$features, combined_1000$features)
 
-# Initialize matrices for each method
-DA_matrix <- matrix(0, nrow = 3, ncol = 3, 
-                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
-                                    c("Test-500", "Test-750", "Test-1000")))
-
-KNN_matrix <- matrix(0, nrow = 3, ncol = 3, 
-                     dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
-                                     c("Test-500", "Test-750", "Test-1000")))
-
-RF_matrix <- matrix(0, nrow = 3, ncol = 3, 
-                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
-                                    c("Test-500", "Test-750", "Test-1000")))
-SVM_matrix <- matrix(0, nrow = 3, ncol = 3, 
-                    dimnames = list(c("Train-500", "Train-750", "Train-1000"), 
-                                    c("Test-500", "Test-750", "Test-1000")))
 
 # Loop over trainsets and testsets
 for (i in 1:length(trainsets)) {
   for (j in 1:length(testsets)) {
-    # Evaluate the models
-    results <- simple_evaluate_model(trainsets[[i]], testsets[[j]])
+    # Evaluate the model
+    results <- evaluate_model(trainsets[[i]], testsets[[j]])
     
-    # Store results in respective matrices
-    DA_matrix[i, j] <- results$DA_accuracy
-    KNN_matrix[i, j] <- results$KNN_accuracy
-    RF_matrix[i, j] <- results$RF_accuracy
-    SVM_matrix[i, j] <- results$SVM_accuracy
+    # Create a descriptive name for the matrix
+    matrix_name <- paste0("Train-", c(500, 750, 1000)[i], "_Test-", c(500, 750, 1000)[j])
+    
+    # Create a matrix from the results
+    results_matrix <- data.frame(
+      #n_folds = results$n_folds,
+      DA_accuracy = results$DA_accuracy,
+      KNN_accuracy = results$KNN_accuracy,
+      RF_accuracy = results$RF_accuracy,
+      SVM_accuracy = results$SVM_accuracy
+    )
+    
+    # Store the matrix in the list with the descriptive name
+    results_matrices[[matrix_name]] <- results_matrix
   }
 }
 
-# Print the matrices
-print("DA Accuracy Matrix:")
-print(DA_matrix)
-
-print("KNN Accuracy Matrix:")
-print(KNN_matrix)
-
-print("RF Accuracy Matrix:")
-print(RF_matrix)
-
-print("SVM Accuracy Matrix:")
-print(SVM_matrix)
-
-
+# Print the results
+print(results_matrices)
 
 # Q3 -----
 
