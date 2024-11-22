@@ -28,6 +28,68 @@ combined_q1$features$GPTM <- do.call(rbind, combined_q1$features$GPTM)
 combined_q1$features$human <- do.call(rbind, combined_q1$features$human)
 
 
+
+# Load required data
+train_random <- combined_q1$features
+
+# Set up cross-validation parameters
+set.seed(1) # Ensure reproducibility of folds
+n_folds <- 5
+# Initialize accuracy lists for each method
+DAaccuracy_list <- numeric(n_folds)
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+SVMaccuracy_list <- numeric(n_folds) # For SVM
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_features$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_features$GPTM)))
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+  
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  
+  # Combine training sets
+  train_fold <- rbind(train_human, train_gptm)
+  train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+  
+  # Combine test sets
+  test_fold <- rbind(test_human, test_gptm)
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using KNN
+  predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using Random Forest
+  predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using SVM
+  svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+  svm_preds <- predict(svm_model, test_fold)
+  SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+}
+
+# Calculate average accuracy for all methods across folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+RFmean_accuracy <- mean(RFaccuracy_list)
+SVMmean_accuracy <- mean(SVMaccuracy_list)
+
+DAmean_accuracy
+KNNmean_accuracy
+RFmean_accuracy
+SVMmean_accuracy
+
 # K-Fold iteration
 
 # Set up parameters
