@@ -88,6 +88,35 @@ evaluate_model <- function(trainset, testset, fold_range = 5) {
   return(accuracy_table)
 }
 
+
+# train_SVM-----
+train_svm <- function(train_data, test_data) {
+  # Extract training and testing data
+  train_human <- train_data$human
+  train_gptm <- train_data$GPTM
+  test_human <- test_data$human
+  test_gptm <- test_data$GPTM
+  
+  # Combine training sets
+  train_fold <- rbind(train_human, train_gptm)
+  train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+  
+  # Combine test sets
+  test_fold <- rbind(test_human, test_gptm)
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train SVM model
+  svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear")
+  
+  # Predict using SVM
+  svm_preds <- predict(svm_model, test_fold)
+  
+  # Calculate accuracy
+  accuracy <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+  
+  return(accuracy)
+}
+
 # Q1 ----
 # Create a new list for Q1
 combined_q1 <- list(
@@ -559,6 +588,10 @@ KNN_all_accuracy <- sum(predsKNN_all == truth_test) / length(truth_test)
 
 RF_without_story_accuracy <- sum(predsRF_without_story == truth_test) / length(truth_test)
 RF_all_accuracy <- sum(predsRF_all == truth_test) / length(truth_test)
+
+# 新的SVM!!!!!!!!!!------
+SVM_without_story_accuracy <- train_svm(combined_without_story$features, combined_only_story$features)
+SVM_all_accuracy <- train_svm(combined_q1$features, combined_only_story$features)
 
 # Print Results
 cat("Discriminant Analysis Accuracy without 'story' in the model:", DA_without_story_accuracy, "\n")
