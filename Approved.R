@@ -132,7 +132,7 @@ combined_q1$features$human <- do.call(rbind, combined_q1$features$human)
 # Set up parameters
 fold_range <- 3:10 # Range of folds to test
 
-accuracy_table <- evaluate_model(combined_g1$features, combined_g1$features, fold_range)
+accuracy_table <- evaluate_model(combined_q1$features, combined_q1$features, fold_range)
 
 # Print the accuracy table
 kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
