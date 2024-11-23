@@ -31,28 +31,40 @@ Without_StoryLit <- list(
 Without_StoryLit$features$human <- do.call(rbind, Without_StoryLit$features$human)
 Without_StoryLit$features$GPTM <- do.call(rbind, Without_StoryLit$features$GPTM)
 
-# SVM --
-# Training and testing data split for human samples
-train_human <- Without_StoryLit$features$human
-test_human <- StoryLit$features$human
 
-# Training and testing data split for GPTM samples
-train_gptm <- Without_StoryLit$features$GPTM
-test_gptm <- StoryLit$features$GPTM
+train_svm <- function(train_data, test_data) {
+  # Extract training and testing data
+  train_human <- train_data$human
+  train_gptm <- train_data$GPTM
+  test_human <- test_data$human
+  test_gptm <- test_data$GPTM
+  
+  # Combine training sets
+  train_fold <- rbind(train_human, train_gptm)
+  train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+  
+  # Combine test sets
+  test_fold <- rbind(test_human, test_gptm)
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train SVM model
+  svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear")
+  
+  # Predict using SVM
+  svm_preds <- predict(svm_model, test_fold)
+  
+  # Calculate accuracy
+  accuracy <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+  
+  return(accuracy)
+}
 
-# Combine training sets
-train_fold <- rbind(train_human, train_gptm)
-train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
 
-# Combine test sets
-test_fold <- rbind(test_human, test_gptm)
-truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+train_svm(Without_StoryLit$features,StoryLit$features)
 
-# Train SVM model
-svm_model <- svm(train_fold, as.factor(train_labels), kernel ="linear")
 
-# Predict using SVM
-svm_preds <- predict(svm_model, test_fold)
 
-accuracy <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+
+
+
 
