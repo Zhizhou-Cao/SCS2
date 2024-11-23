@@ -585,7 +585,7 @@ for (f in 1:length(fold_range)) {
 # Print the accuracy table
 print(accuracy_table)
 
-
+train_random <- combined_q1$features
 # SVM
 set.seed(1) # Ensure reproducibility of folds
 n_folds <- 5
@@ -710,9 +710,6 @@ for (fold in 1:n_folds) {
 
 KNNmean_accuracy <- mean(KNNaccuracy_list)
 KNNmean_accuracy
-
-
-
 
 
 

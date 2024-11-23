@@ -65,6 +65,95 @@ train_svm(Without_StoryLit$features,StoryLit$features)
 
 
 
+# Q3.2 ----
+# Used trained model(without 'StoryLit') to test StoryLit
+topic <- 97 #Stories and literature
+humanfeatures_story <- humanM$features[[topic]] #select the essays on this particular topic
+GPTfeatures_story <- GPTM$features[[topic]]
+
+features_only_story <- rbind(humanfeatures, GPTfeatures) #this is a matrix of both human and GPT essays#authornames_story <- c(rep(0,nrow(humanfeatures)), rep(1,nrow(GPTfeatures)))
+
+combined_only_story <- list(
+  features = list(
+    human = humanfeatures_story,
+    GPTM = GPTfeatures_story),
+  authornames = c("human", "GPT"))
+
+
+humanfeatures_without_story <- humanM$features[-topic]
+GPTfeatures_without_story <- GPTM$features[-topic]
+
+# Combine the updated features into a new dataset
+combined_without_story <- list(
+  features = list(
+    human = do.call(rbind, humanfeatures_without_story),  # Combine into a matrix
+    GPTM = do.call(rbind, GPTfeatures_without_story)      # Combine into a matrix
+  ),
+  authornames = c("human", "GPT")
+)
+
+# Train and Test Datasets
+train_human <- combined_without_story$features$human
+train_gptm <- combined_without_story$features$GPTM
+test_human <- combined_only_story$features$human
+test_gptm <- combined_only_story$features$GPTM
+
+# Combine Train Data
+train_data <- list(
+  human = train_human,
+  GPTM = train_gptm
+)
+
+# Combine Test Data
+test_data <- rbind(
+  test_human,
+  test_gptm
+)
+# Ground truth for the test data (1 for human, 2 for GPTM)
+truth_test <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+
+# Perform Discriminant Analysis (DA)
+predsDA_without_story <- discriminantCorpus(train_data, test_data)
+predsDA_all <- discriminantCorpus(combined_q1$features, test_data)
+
+# Perform K-Nearest Neighbors (KNN)
+predsKNN_without_story <- KNNCorpus(train_data, test_data)
+predsKNN_all <- KNNCorpus(combined_q1$features, test_data)
+
+# Perform Random Forest (RF)
+predsRF_without_story <- randomForestCorpus(train_data, test_data)
+predsRF_all <- randomForestCorpus(combined_q1$features, test_data)
+
+# Evaluate Accuracy
+DA_without_story_accuracy <- sum(predsDA_without_story == truth_test) / length(truth_test)
+DA_all_accuracy <- sum(predsDA_all == truth_test) / length(truth_test)
+
+KNN_without_story_accuracy <- sum(predsKNN_without_story == truth_test) / length(truth_test)
+KNN_all_accuracy <- sum(predsKNN_all == truth_test) / length(truth_test)
+
+RF_without_story_accuracy <- sum(predsRF_without_story == truth_test) / length(truth_test)
+RF_all_accuracy <- sum(predsRF_all == truth_test) / length(truth_test)
+
+SVM_without_story_accuracy <- train_svm(combined_without_story$features, combined_only_story$features)
+SVM_all_accuracy <- train_svm(combined_q1$features, combined_only_story$features)
+
+# Print Results
+cat("Discriminant Analysis Accuracy without 'story' in the model:", DA_without_story_accuracy, "\n")
+cat("K-Nearest Neighbors Accuracy without 'story' in the model:", KNN_without_story_accuracy, "\n")
+cat("Random Forest Accuracy without 'story' in the model:", RF_without_story_accuracy, "\n")
+cat("Discriminant Analysis Accuracy with 'story' in the model:", DA_all_accuracy, "\n")
+cat("K-Nearest Neighbors Accuracy with 'story' in the model:", KNN_all_accuracy, "\n")
+cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
+
+
+
+
+
+
+
+
+
+
 
 
 
