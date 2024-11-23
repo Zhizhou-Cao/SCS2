@@ -630,63 +630,46 @@ cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
 # Number of papers and sets
 num_papers <- 73
 num_sets <- 5
-
 # Divide papers into 5 sets (approximately equal)
-set.seed(1)
-set_indices <- sample(rep(1:num_sets, length.out = num_papers))  # Randomly assign papers to sets
+# Set seed for reproducibility
+# Randomly assign essays to sets
+set_indices <- sample(rep(1:num_sets, length.out = num_papers))
 
-# Choose one of the 5 sets as the test set
-test_set_id <- 1  # You can change this to select a different set as the test set
+# Choose one set as the test set
+test_set_id <- 2  # You can change this to evaluate other test sets
 test_indices <- which(set_indices == test_set_id)
 
 # Indices for the remaining sets
 remaining_sets <- setdiff(1:num_sets, test_set_id)
 
-# Initialize matrix to store accuracies
+# Methods to evaluate
 methods <- c("DA", "KNN", "RF")
+
+# Initialize matrix to store accuracies
 accuracy_matrix <- matrix(0, nrow = length(remaining_sets), ncol = length(methods),
                           dimnames = list(paste0("TrainSets=", 1:length(remaining_sets)), methods))
 
 # Test data (fixed throughout the process)
-test_human <- combined_only_story$features$human[test_indices , drop = FALSE]
-test_gptm <- combined_only_story$features$GPTM[test_indices, drop = FALSE]
+test_human <- combined_only_story$features$human[test_indices, , drop = FALSE]
+test_gptm <- combined_only_story$features$GPTM[test_indices, , drop = FALSE]
 test_data <- rbind(test_human, test_gptm)
+truth_test <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
 
-# Ground truth for the test data
-#truth_test <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
-# Train and Test Datasets
+# Train data without "Story and Literature"
 train_human <- combined_without_story$features$human
 train_gptm <- combined_without_story$features$GPTM
-test_human <- combined_only_story$features$human
-test_gptm <- combined_only_story$features$GPTM
 
-# Combine Train Data
-train_data <- list(
-  human = train_human,
-  GPTM = train_gptm
-)
-
-# Combine Test Data
-test_data <- rbind(
-  test_human,
-  test_gptm
-)
-
-
-# Ground truth for the test data (1 for human, 2 for GPTM)
-truth_test <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
-# Loop through 1 to 4 trainsets
+# Loop through 1 to 4 trainsets (incrementally adding "Story and Literature" sets)
 for (train_size in 1:length(remaining_sets)) {
-  # Select train indices by combining combined_without_story with train_size sets from the remaining sets
+  # Select train indices from the remaining sets
   train_set_ids <- remaining_sets[1:train_size]
   additional_train_indices <- which(set_indices %in% train_set_ids)
   
-  # Train data
-  train_human <- rbind(combined_without_story$features$human,
-                       combined_only_story$features$human[additional_train_indices , drop = FALSE])
-  train_gptm <- rbind(combined_without_story$features$GPTM,
-                      combined_only_story$features$GPTM[additional_train_indices , drop = FALSE])
-  train_data <- list(human = train_human, GPTM = train_gptm)
+  # Train data (combine without "Story" and selected "Story" sets)
+  train_human_with_story <- rbind(train_human, combined_only_story$features$human[additional_train_indices, , drop = FALSE])
+  train_gptm_with_story <- rbind(train_gptm, combined_only_story$features$GPTM[additional_train_indices, , drop = FALSE])
+  
+  train_data <- list(human = train_human_with_story, GPTM = train_gptm_with_story)
   
   # Perform DA, KNN, and RF
   predsDA <- discriminantCorpus(train_data, test_data)
@@ -702,7 +685,6 @@ for (train_size in 1:length(remaining_sets)) {
 # Print the accuracy matrix
 print("Accuracy Matrix by Trainset Sizes:")
 print(accuracy_matrix)
-
 
 
 
