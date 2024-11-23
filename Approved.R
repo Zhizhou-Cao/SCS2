@@ -137,11 +137,6 @@ accuracy_table <- evaluate_model(combined_q1$features, combined_q1$features, fol
 # Print the accuracy table
 kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
 
-
-
-# Print the accuracy table
-kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
-
 # Visualisation
 # Plotting the accuracy table using ggplot2
 accuracy_long <- tidyr::pivot_longer(
@@ -160,7 +155,7 @@ accuracy_long$Method <- factor(
 
 # Create the plot
 
-ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
+q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 3, alpha = 0.6) +
   labs(
@@ -179,7 +174,8 @@ ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
     legend.position = c(0.5, 0.5), # Updated position argument
     legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
     )
-
+q1accuracy_plot
+ggsave(filename = "q1accuracy_plot.png", plot = q1accuracy_plot)
 
 # Q2 -----
 humanM$authornames <- rep(0, length(humanM$authornames))
