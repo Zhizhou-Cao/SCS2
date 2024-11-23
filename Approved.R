@@ -135,7 +135,7 @@ fold_range <- 3:10 # Range of folds to test
 accuracy_table <- evaluate_model(combined_q1$features, combined_q1$features, fold_range)
 
 # Print the accuracy table
-kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "markdown")
+kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "latex", booktabs = TRUE)
 
 # Visualisation
 # Plotting the accuracy table using ggplot2
@@ -167,10 +167,10 @@ q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = M
   scale_x_continuous(breaks = fold_range) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 0.5, size = 14),
-    axis.title = element_text(size = 12),
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 10),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    axis.title = element_text(size = 20),
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 20),
     legend.position = c(0.5, 0.5), # Updated position argument
     legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
     )
