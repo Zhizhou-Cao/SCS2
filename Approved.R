@@ -614,7 +614,7 @@ test_indices <- which(set_indices == test_set_id)
 remaining_sets <- setdiff(1:num_sets, test_set_id)
 
 # Methods to evaluate
-methods <- c("DA", "KNN", "RF")
+methods <- c("DA", "KNN", "RF", "SVM")
 
 # Initialize matrix to store accuracies
 accuracy_matrix <- matrix(0, nrow = length(remaining_sets), ncol = length(methods),
@@ -647,10 +647,21 @@ for (train_size in 1:length(remaining_sets)) {
   predsKNN <- KNNCorpus(train_data, test_data)
   predsRF <- randomForestCorpus(train_data, test_data)
   
+  
+  # Prepare SVM training data
+  train_features <- rbind(train_data$human, train_data$GPTM)
+  train_labels <- c(rep(1, nrow(train_data$human)), rep(2, nrow(train_data$GPTM)))  # Adjust labels accordingly
+  
+  # Train and predict using SVM
+  svm_model <- svm(train_features, as.factor(train_labels), kernel = "linear", probability = TRUE)
+  svm_preds <- predict(svm_model, test_data)
+  
   # Calculate and store accuracies
   accuracy_matrix[train_size, "DA"] <- sum(predsDA == truth_test) / length(truth_test)
   accuracy_matrix[train_size, "KNN"] <- sum(predsKNN == truth_test) / length(truth_test)
   accuracy_matrix[train_size, "RF"] <- sum(predsRF == truth_test) / length(truth_test)
+  
+  accuracy_matrix[train_size, "SVM"] <- sum(svm_preds == truth_test) / length(truth_test)
 }
 
 # Print the accuracy matrix
