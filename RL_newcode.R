@@ -761,3 +761,62 @@ ggplot(accuracy_melted, aes(x = Function_Words, y = Accuracy, color = Method, gr
   theme_minimal()
 results_all <- evaluate_models(trainset = combined_q1$features, testset = combined_q1$features)
 print(results_all)
+
+
+
+simple_evaluate_model <- function(trainset, testset, n_folds = 5) {
+  # Set up cross-validation parameters
+  set.seed(1)  # Ensure reproducibility
+  
+  # Initialize accuracy lists
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
+  
+  # Create folds for cross-validation
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(trainset$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(trainset$GPTM)))
+  
+  # Perform cross-validation
+  for (fold in 1:n_folds) {
+    # Training and testing split for human samples
+    train_human <- trainset$human[folds_human != fold, , drop = FALSE]
+    test_human <- testset$human[folds_human == fold, , drop = FALSE]
+    
+    # Training and testing split for GPTM samples
+    train_gptm <- trainset$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- testset$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training and test sets
+    train_fold <- list(train_human, train_gptm)
+    test_fold <- rbind(test_human, test_gptm)
+    
+    # Create ground truth for the test set
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+    
+    
+    # Train and predict using the models
+    predsDA_fold <- discriminantCorpus(train_fold, test_fold)
+    predsKNN_fold <- KNNCorpus(train_fold, test_fold)
+    predsRF_fold <- randomForestCorpus(train_fold, test_fold)
+    
+    # Calculate accuracy for each model
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  }
+  
+  # Calculate mean accuracy across all folds
+  DA_mean_accuracy <- mean(DAaccuracy_list)
+  KNN_mean_accuracy <- mean(KNNaccuracy_list)
+  RF_mean_accuracy <- mean(RFaccuracy_list)
+  
+  # Return the accuracies
+  return(list(
+    DA_accuracy = DA_mean_accuracy,
+    KNN_accuracy = KNN_mean_accuracy,
+    RF_accuracy = RF_mean_accuracy
+  ))
+}
+# Example usage of the
