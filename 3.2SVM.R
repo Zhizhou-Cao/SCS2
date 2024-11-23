@@ -32,13 +32,6 @@ Without_StoryLit$features$human <- do.call(rbind, Without_StoryLit$features$huma
 Without_StoryLit$features$GPTM <- do.call(rbind, Without_StoryLit$features$GPTM)
 
 # SVM --
-# Train SVM model
-svm_model <- svm(Without_StoryLit$features, as.factor(train_labels), kernel ="linear")
-
-# Predict using SVM
-svm_preds <- predict(svm_model, Without_StoryLit$features)
-
-
 # Training and testing data split for human samples
 train_human <- Without_StoryLit$features$human
 test_human <- StoryLit$features$human
