@@ -361,6 +361,45 @@ for (i in 1:length(trainsets)) {
 # Print the results
 print(results_matrices)
 
+# Initialize an empty data frame
+final_table <- data.frame(
+  Trainset = character(),
+  Testset = character(),
+  DA_accuracy = numeric(),
+  KNN_accuracy = numeric(),
+  RF_accuracy = numeric(),
+  SVM_accuracy = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Loop through the results_matrices to extract data
+for (name in names(results_matrices)) {
+  # Extract trainset and testset names from the list name
+  split_name <- strsplit(name, "_")[[1]]
+  trainset <- gsub("Train-", "", split_name[1])
+  testset <- gsub("Test-", "", split_name[2])
+  
+  # Extract the accuracy values from the matrix
+  accuracy_values <- results_matrices[[name]]
+  
+  # Append the row to the final table
+  final_table <- rbind(
+    final_table,
+    data.frame(
+      Trainset = trainset,
+      Testset = testset,
+      DA_accuracy = accuracy_values$DA_accuracy,
+      KNN_accuracy = accuracy_values$KNN_accuracy,
+      RF_accuracy = accuracy_values$RF_accuracy,
+      SVM_accuracy = accuracy_values$SVM_accuracy
+    )
+  )
+}
+
+# Print the final table
+print(final_table)
+
+
 # Q3 -----
 
 # Q3.1 -----
