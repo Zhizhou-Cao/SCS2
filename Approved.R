@@ -701,7 +701,7 @@ variance_df <- data.frame(
 # Variance visualisation
 # Add annotations to the plot
 points_to_annotate <- c(3, 6, 15, 70)
-ggplot(variance_df, aes(x = Rank, y = Variance)) +
+q4variance_plot<- ggplot(variance_df, aes(x = Rank, y = Variance)) +
   geom_line() +
   geom_point() +
   geom_text(data = variance_df[points_to_annotate, ], 
@@ -712,7 +712,12 @@ ggplot(variance_df, aes(x = Rank, y = Variance)) +
     title = "Variance of Function Words",
     x = "Rank of Function Words (Descending Variance)",
     y = "Variance") +
-  theme_minimal()
+  theme_minimal()+
+  theme(
+    text = element_text(size = 20))
+
+q4variance_plot
+ggsave(filename = "q4variance_plot.png", plot = q4variance_plot)
 
 # Test the words effect on modelling
 top3_word_indices <- words_order[1:3] #c(52, 39, 58)
@@ -780,7 +785,7 @@ Q4_accuracy_table <- data.frame(
   DA,KNN,RF,SVM)
 
 # View the resulting data frame
-kable(Q4_accuracy_table)
+kable(Q4_accuracy_table, format = 'latex', booktabs = TRUE, caption = "Accuracy Across Function Words")
 
 # Convert the data frame to long format for ggplot
 Q4accuracy_long <- reshape2::melt(Q4_accuracy_table, 
@@ -791,7 +796,7 @@ Q4accuracy_long <- reshape2::melt(Q4_accuracy_table,
 
 
 # Plot
-ggplot(Q4accuracy_long, aes(x = num_function_words, y = Accuracy, color = Method)) +
+q4words_plot<- ggplot(Q4accuracy_long, aes(x = num_function_words, y = Accuracy, color = Method)) +
   geom_line() +     # Lines connecting points
   geom_point(size = 3, alpha = 0.5) +    # Points for each method
   labs(
@@ -802,15 +807,17 @@ ggplot(Q4accuracy_long, aes(x = num_function_words, y = Accuracy, color = Method
   scale_x_continuous(breaks = num_function_words) +
   theme_bw() +         # Minimalistic theme
   theme(
-    text = element_text(size = 12),
+    text = element_text(size = 20),
     legend.position = c(0.75, 0.5),    # Center the legend
     legend.background = element_rect(fill = "white", color = "grey"), # Optional: Add a border
     legend.title = element_text(face = "bold"),
     legend.key.size = unit(0.8, "cm")  # Adjust legend key size
   )
+q4words_plot
+ggsave(filename = "q4words_plot.png", plot = q4words_plot)
 
 results_all <- evaluate_model(combined_q1$features, combined_q1$features)
-kable(results_all)
+kable(results_all, format = 'latex',booktabs = TRUE, caption = "Accuracy with Full 71 Function Words")
 
 
 
