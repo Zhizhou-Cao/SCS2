@@ -597,24 +597,34 @@ test_data <- rbind(
 truth_test <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
 
 # Perform Discriminant Analysis (DA)
-predsDA <- discriminantCorpus(train_data, test_data)
+predsDA_without_story <- discriminantCorpus(train_data, test_data)
+predsDA_all <- discriminantCorpus(combined_q1$features, test_data)
 
 # Perform K-Nearest Neighbors (KNN)
-predsKNN <- KNNCorpus(train_data, test_data)
+predsKNN_without_story <- KNNCorpus(train_data, test_data)
+predsKNN_all <- KNNCorpus(combined_q1$features, test_data)
 
 # Perform Random Forest (RF)
-predsRF <- randomForestCorpus(train_data, test_data)
+predsRF_without_story <- randomForestCorpus(train_data, test_data)
+predsRF_all <- randomForestCorpus(combined_q1$features, test_data)
 
 # Evaluate Accuracy
-DA_accuracy <- sum(predsDA == truth_test) / length(truth_test)
-KNN_accuracy <- sum(predsKNN == truth_test) / length(truth_test)
-RF_accuracy <- sum(predsRF == truth_test) / length(truth_test)
+DA_without_story_accuracy <- sum(predsDA_without_story == truth_test) / length(truth_test)
+DA_all_accuracy <- sum(predsDA_all == truth_test) / length(truth_test)
+
+KNN_without_story_accuracy <- sum(predsKNN_without_story == truth_test) / length(truth_test)
+KNN_all_accuracy <- sum(predsKNN_all == truth_test) / length(truth_test)
+
+RF_without_story_accuracy <- sum(predsRF_without_story == truth_test) / length(truth_test)
+RF_all_accuracy <- sum(predsRF_all == truth_test) / length(truth_test)
 
 # Print Results
-cat("Discriminant Analysis Accuracy:", DA_accuracy, "\n")
-cat("K-Nearest Neighbors Accuracy:", KNN_accuracy, "\n")
-cat("Random Forest Accuracy:", RF_accuracy, "\n")
-
+cat("Discriminant Analysis Accuracy without 'story' in the model:", DA_without_story_accuracy, "\n")
+cat("K-Nearest Neighbors Accuracy without 'story' in the model:", KNN_without_story_accuracy, "\n")
+cat("Random Forest Accuracy without 'story' in the model:", RF_without_story_accuracy, "\n")
+cat("Discriminant Analysis Accuracy with 'story' in the model:", DA_all_accuracy, "\n")
+cat("K-Nearest Neighbors Accuracy with 'story' in the model:", KNN_all_accuracy, "\n")
+cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
 
 # Q3.3 -----
 # Number of papers and sets
