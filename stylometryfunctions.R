@@ -57,6 +57,14 @@ myKNN <- function(traindata, testdata, trainlabels, k=1) {
   mus <- apply(traindata,2,mean) 
   sigmas <- apply(traindata,2,sd)
   
+  ###
+  # Store sigmas in a list
+  sigmas_list <- as.list(sigmas)
+  
+  # Count the number of 0s in sigmas
+  zero_count <- sum(sigmas == 0)
+  ###
+  
   for (i in 1:ncol(traindata)) {
     traindata[,i] <- (traindata[,i] - mus[i])/sigmas[i]
   }

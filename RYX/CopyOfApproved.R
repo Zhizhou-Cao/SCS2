@@ -394,6 +394,174 @@ StoryLit$features$GPTM <- do.call(rbind, StoryLit$features$GPTM)
 # Load required data
 train_random <- StoryLit$features
 # Set up cross-validation parameters
+set.seed(53) # Ensure reproducibility of folds
+n_folds <- 5 # KNN has greatest accuracy
+
+# Initialize accuracy lists for each method
+DAaccuracy_list <- numeric(n_folds)
+KNNaccuracy_list <- numeric(n_folds)
+RFaccuracy_list <- numeric(n_folds)
+SVMaccuracy_list <- numeric(n_folds) # For SVM
+
+# Create folds for each class (human and GPTM)
+folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+
+# Perform 5-fold cross-validation
+for (fold in 1:n_folds) {
+  # Training and testing data split for human samples
+  train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+  test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+  
+  # Training and testing data split for GPTM samples
+  train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+  test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+  
+  # Combine training sets
+  train_fold <- rbind(train_human, train_gptm)
+  train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+  
+  # Combine test sets
+  test_fold <- rbind(test_human, test_gptm)
+  truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+  
+  # Train and predict using discriminant analysis
+  predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+  DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using KNN
+  predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+  KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using Random Forest
+  predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+  RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+  
+  # Train and predict using SVM
+  svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+  svm_preds <- predict(svm_model, test_fold)
+  SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+}
+
+
+
+----------
+  
+# Set the number of repetitions
+n_repeats <- 100  # 例如重复10次
+overall_results <- data.frame(DA = numeric(), KNN = numeric(), RF = numeric(), SVM = numeric()) 
+
+# Repeat cross-validation with different seeds
+for (seed_value in 1001:1200) {
+  set.seed(seed_value) # Change seed for each repeat
+  
+  n_folds <- 2 # Number of folds
+  
+  # Initialize accuracy lists for each method
+  DAaccuracy_list <- numeric(n_folds)
+  KNNaccuracy_list <- numeric(n_folds)
+  RFaccuracy_list <- numeric(n_folds)
+  SVMaccuracy_list <- numeric(n_folds)
+  
+  # Create folds for each class (human and GPTM)
+  folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+  folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+  
+  # Perform 5-fold cross-validation
+  for (fold in 1:n_folds) {
+    # Training and testing data split for human samples
+    train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+    test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+    
+    # Training and testing data split for GPTM samples
+    train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+    test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+    
+    # Combine training sets
+    train_fold <- rbind(train_human, train_gptm)
+    train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+    
+    # Combine test sets
+    test_fold <- rbind(test_human, test_gptm)
+    truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+    
+    # Train and predict using discriminant analysis
+    predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
+    DAaccuracy_list[fold] <- sum(predsDA_fold == truth_fold) / length(truth_fold)
+    
+    # Train and predict using KNN
+    predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+    KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+    
+    # Train and predict using Random Forest
+    predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
+    RFaccuracy_list[fold] <- sum(predsRF_fold == truth_fold) / length(truth_fold)
+    
+    # Train and predict using SVM
+    svm_model <- svm(train_fold, as.factor(train_labels), kernel = "linear", probability = TRUE)
+    svm_preds <- predict(svm_model, test_fold)
+    SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
+  }
+  
+  # Store mean accuracy for each method across the 5 folds
+  overall_results <- rbind(overall_results, data.frame(
+    DA = mean(DAaccuracy_list),
+    KNN = mean(KNNaccuracy_list),
+    RF = mean(RFaccuracy_list),
+    SVM = mean(SVMaccuracy_list)
+  ))
+}
+
+# Display the overall results
+print(overall_results)
+
+  
+----------
+  
+  
+  
+  
+  
+# Calculate average accuracy for all methods across folds
+DAmean_accuracy <- mean(DAaccuracy_list)
+KNNmean_accuracy <- mean(KNNaccuracy_list)
+RFmean_accuracy <- mean(RFaccuracy_list)
+SVMmean_accuracy <- mean(SVMaccuracy_list)
+
+# Create a table of the results
+accuracy_table_3.1 <- data.frame(
+  Method = c("DA", "KNN", "Random Forest", "SVM"),
+  Average_Accuracy = c(DAmean_accuracy, KNNmean_accuracy, RFmean_accuracy, SVMmean_accuracy)
+)
+
+# Print the table
+kable(accuracy_table_3.1, caption = "Average Accuracy Across Methods", format = "markdown")
+
+
+
+
+# Architecture
+humanM_Q31 <- humanM
+GPTM_Q31 <- GPTM
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM_Q31$booknames, function(x) any(grepl("Architecture", x))))
+if (length(Architecture_index) > 0) {
+  humanM_Q31$features <- humanM_Q31$features[Architecture_index]
+  GPTM_Q31$features <- GPTM_Q31$features[Architecture_index]}
+
+# Create a new list for Q3.1
+Architecture <- list(
+  features = list(
+    human = humanM_Q31$features,
+    GPTM = GPTM_Q31$features),
+  authornames = c("human", "GPT"))
+Architecture$features$human <- do.call(rbind, Architecture$features$human)
+Architecture$features$GPTM <- do.call(rbind, Architecture$features$GPTM)
+
+
+
+train_random <- Architecture$features
+# Set up cross-validation parameters
 set.seed(1) # Ensure reproducibility of folds
 n_folds <- 5 # KNN has greatest accuracy
 
@@ -443,49 +611,191 @@ for (fold in 1:n_folds) {
   SVMaccuracy_list[fold] <- sum(as.numeric(svm_preds) == truth_fold) / length(truth_fold)
 }
 
-# Calculate average accuracy for all methods across folds
-DAmean_accuracy <- mean(DAaccuracy_list)
-KNNmean_accuracy <- mean(KNNaccuracy_list)
-RFmean_accuracy <- mean(RFaccuracy_list)
-SVMmean_accuracy <- mean(SVMaccuracy_list)
-
-# Create a table of the results
-accuracy_table_3.1 <- data.frame(
-  Method = c("DA", "KNN", "Random Forest", "SVM"),
-  Average_Accuracy = c(DAmean_accuracy, KNNmean_accuracy, RFmean_accuracy, SVMmean_accuracy)
-)
-
-# Print the table
-kable(accuracy_table_3.1, caption = "Average Accuracy Across Methods", format = "markdown")
 
 
-
-
-# Architecture
-humanM_Q31 <- humanM
-GPTM_Q31 <- GPTM
-# Identify the index of the "Architecture" folder in booknames
-Architecture_index <- which(sapply(humanM_Q31$booknames, function(x) any(grepl("Architecture", x))))
-if (length(Architecture_index) > 0) {
-  humanM_Q31$features <- humanM_Q31$features[Architecture_index]
-  GPTM_Q31$features <- GPTM_Q31$features[Architecture_index]}
-
-# Create a new list for Q3.1
-Architecture <- list(
-  features = list(
-    human = humanM_Q31$features,
-    GPTM = GPTM_Q31$features),
-  authornames = c("human", "GPT"))
-Architecture$features$human <- do.call(rbind, Architecture$features$human)
-Architecture$features$GPTM <- do.call(rbind, Architecture$features$GPTM)
 
 
 
 # Exist Error, Explain here
 
-humanM_Q312 <- humanM
-GPTM_Q312 <- GPTM
+# Identify the index of the "Architecture" folder in booknames
+Architecture_index <- which(sapply(humanM $booknames, function(x) any(grepl("Architecture", x))))
+Stories_index <- which(sapply(humanM$booknames, function(x) any(grepl("Stories and literature", x))))
 
+# Define a function to compute the standard deviation for each position
+compute_sd_per_position <- function(features_list) {
+  # Combine all matrices in the list by stacking them row-wise into a single matrix
+  combined_matrix <- do.call(rbind, features_list)
+  
+  sigmas <- apply(combined_matrix, 2, sd)
+  print(sigmas)# Compute column-wise standard deviation
+  
+  for (i in 1:ncol(combined_matrix)) {
+    combined_matrix[, i] <- (combined_matrix[, i] - mus[i]) / sigmas[i]
+  }
+  
+  # Compute the standard deviation for each column (position)
+  apply(combined_matrix, 2, sd)
+}
+
+
+# Calculate the standard deviation for each position in GPT and Human data
+gpt_sd_Arch <- compute_sd_per_position(GPTM$features[Architecture_index])
+human_sd_Arch <- compute_sd_per_position(humanM$features[Architecture_index])
+
+gpt_sd_Story <- compute_sd_per_position(GPTM$features[Stories_index])
+human_sd_Story <- compute_sd_per_position(humanM$features[Stories_index])
+
+# Count the number of zeros in each category
+zeros_Stories_ChatGPT <- sum(gpt_sd_Story == 0)
+zeros_Stories_Human <- sum(human_sd_Story == 0)
+zeros_Arch_ChatGPT <- sum(gpt_sd_Arch == 0)
+zeros_Arch_Human <- sum(human_sd_Arch == 0)
+
+# Create a 2x2 matrix to represent the table of zero counts
+zero_table <- matrix(c(
+  zeros_Stories_ChatGPT, zeros_Stories_Human,
+  zeros_Arch_ChatGPT, zeros_Arch_Human
+), 
+nrow = 2, byrow = TRUE)
+
+# Assign row and column names to the matrix
+rownames(zero_table) <- c("Stories and Literature", "Architecture")
+colnames(zero_table) <- c("ChatGPT", "Human")
+
+# Print the table of zero counts
+print(zero_table)
+
+# Print out the SD for each topic
+cat("GPT SD for Stories and Literature:", paste(round(gpt_sd_Story, 2), collapse = " "), "\n")
+cat("Human SD for Stories and Literature:", paste(round(human_sd_Story, 2), collapse = " "), "\n")
+
+cat("GPT SD for Architecture:", paste(round(gpt_sd_Arch, 2), collapse = " "), "\n")
+cat("Human SD for Architecture:", paste(round(human_sd_Arch, 2), collapse = " "), "\n")
+
+
+
+##--------Real Error Explanation--------
+
+# Identify the index of the four folders in booknames
+Architecture_index <- which(sapply(humanM $booknames, function(x) any(grepl("Architecture", x))))
+Addiction_index <- which(sapply(humanM$booknames, function(x) any(grepl("Addiction", x))))
+Stories_index <- which(sapply(humanM$booknames, function(x) any(grepl("Stories and literature", x))))
+Art_index <- which(sapply(humanM$booknames, function(x) any(grepl("Art", x))))
+
+# Create a list to store results
+results <- list()
+
+# Define the index names and corresponding keywords
+indices <- list(
+  Architecture = "Architecture",
+  Addiction = "Addiction",
+  Stories = "Stories and literature",
+  Art = "Art"
+)
+
+# Iterate through each index and process it
+for (index_name in names(indices)) {
+  cat("\n-----------------------------\n")
+  cat(paste("Standard deviation: Number of zeros in", shQuote(index_name), "...\n"))
+  cat("-----------------------------\n")
+  
+  tryCatch({
+    keyword <- indices[[index_name]]
+    
+    # Generate index based on the current keyword
+    current_index <- which(sapply(humanM$booknames, function(x) any(grepl(keyword, x))))
+    
+    # If matches are found, filter features based on the current index
+    if (length(current_index) > 0) {
+      humanM_Q31$features <- humanM$features[current_index]
+      GPTM_Q31$features <- GPTM$features[current_index]
+    } else {
+      # Skip this iteration if no matches
+      next
+    }
+    
+    # Create a new list for the current category
+    CurrentCategory <- list(
+      features = list(
+        human = humanM_Q31$features,
+        GPTM = GPTM_Q31$features
+      ),
+      authornames = c("human", "GPT")
+    )
+    
+    # Combine all feature data for both human and GPTM
+    CurrentCategory$features$human <- do.call(rbind, CurrentCategory$features$human)
+    CurrentCategory$features$GPTM <- do.call(rbind, CurrentCategory$features$GPTM)
+    
+    # Assign the features for cross-validation
+    train_random <- CurrentCategory$features
+    
+    # Set up cross-validation parameters
+    set.seed(1)
+    n_folds <- 5
+    
+    # Initialize accuracy lists for KNN
+    KNNaccuracy_list <- numeric(n_folds) # Accuracy for k-Nearest Neighbors
+    
+    # Create cross-validation folds for each class (human and GPTM)
+    folds_human <- sample(rep(1:n_folds, length.out = nrow(train_random$human)))
+    folds_gptm <- sample(rep(1:n_folds, length.out = nrow(train_random$GPTM)))
+    
+    # Perform 5-fold cross-validation
+    for (fold in 1:n_folds) {
+      tryCatch({
+        # Split human data into training and testing sets for this fold
+        train_human <- train_random$human[folds_human != fold, , drop = FALSE]
+        test_human <- train_random$human[folds_human == fold, , drop = FALSE]
+        
+        # Split GPTM data into training and testing sets for this fold
+        train_gptm <- train_random$GPTM[folds_gptm != fold, , drop = FALSE]
+        test_gptm <- train_random$GPTM[folds_gptm == fold, , drop = FALSE]
+        
+        # Combine training sets from human and GPTM
+        train_fold <- rbind(train_human, train_gptm)
+        train_labels <- c(rep(1, nrow(train_human)), rep(2, nrow(train_gptm)))
+        
+        # Combine test sets from human and GPTM
+        test_fold <- rbind(test_human, test_gptm)
+        truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
+        
+        # Train and predict using k-Nearest Neighbors
+        predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+        KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
+      }, error = function(e) {
+        # If an error occurs in the fold, print a message and continue
+        cat(paste("    Error in fold", fold, ":", e$message, "\n"))
+        return(NULL)  # Exit the current fold's tryCatch
+      })
+    }
+    
+    # Calculate mean accuracy for KNN
+    if (0 %in% KNNaccuracy_list) {
+      KNNmean_accuracy <- NA 
+    }else {
+      KNNmean_accuracy <- mean(KNNaccuracy_list, na.rm = TRUE)
+    }
+    
+    cat(paste("Mean KNN accuracy for", index_name, ":", round(KNNmean_accuracy, 2), "\n"))
+    
+    # Save the average accuracy for the current index
+    results[[index_name]] <- list(
+      KNNaccuracy = mean(KNNaccuracy_list, na.rm = TRUE) # Use `na.rm = TRUE` to handle possible NA values
+    )
+  }, error = function(e) {
+    # If an error occurs in the whole index, print a message and continue
+    cat(paste("Error in index", index_name, ":", e$message, "\n"))
+    return(NULL)
+  })
+}
+
+
+
+
+
+####----------Real Error explanation version 2-----------
 # Identify the index of the four folders in booknames
 Architecture_index <- which(sapply(humanM $booknames, function(x) any(grepl("Architecture", x))))
 Addiction_index <- which(sapply(humanM$booknames, function(x) any(grepl("Addiction", x))))
@@ -525,8 +835,8 @@ for (index_name in names(indices)) {
     
     # If matches are found, filter features based on the current index
     if (length(current_index) > 0) {
-      humanM_Q312$features <- humanM_Q312$features[current_index]
-      GPTM_Q312$features <- GPTM_Q312$features[current_index]
+      humanM_Q31$features <- humanM$features[current_index]
+      GPTM_Q31$features <- GPTM$features[current_index]
     } else {
       # Skip this iteration if no matches
       next
@@ -535,8 +845,8 @@ for (index_name in names(indices)) {
     # Create a new list for the current category
     CurrentCategory <- list(
       features = list(
-        human = humanM_Q312$features,
-        GPTM = GPTM_Q312$features
+        human = humanM_Q31$features,
+        GPTM = GPTM_Q31$features
       ),
       authornames = c("human", "GPT")
     )
@@ -615,17 +925,11 @@ for (index_name in names(indices)) {
   }, error = function(e) {
     # Suppress the error message for the topic and continue
     return(NULL)
-    
   })
-  
-  # Reset humanM_Q312 and GPTM_Q312 to their original values after each topic
-  humanM_Q312 <- humanM
-  GPTM_Q312 <- GPTM
 }
 
 # Print the final results table
 kable(results_table, format = "markdown")
-
 
 
 
@@ -715,8 +1019,6 @@ cat("Random Forest Accuracy without 'story' in the model:", RF_without_story_acc
 cat("Discriminant Analysis Accuracy with 'story' in the model:", DA_all_accuracy, "\n")
 cat("K-Nearest Neighbors Accuracy with 'story' in the model:", KNN_all_accuracy, "\n")
 cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
-
-
 
 # Q3.3 -----
 # Number of papers and sets
