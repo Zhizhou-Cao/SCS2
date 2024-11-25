@@ -609,7 +609,7 @@ for (index_name in names(indices)) {
       Fold_3_SD_Zeros = SD_zero_counts[3],
       Fold_4_SD_Zeros = SD_zero_counts[4],
       Fold_5_SD_Zeros = SD_zero_counts[5],
-      Mean_KNN_Accuracy = round(KNNmean_accuracy, 2)
+      Mean_KNN_Accuracy = round(KNNmean_accuracy, 4)
     ))
     
   }, error = function(e) {
