@@ -782,29 +782,29 @@ predsKNN_all <- KNNCorpus(combined_q1$features, test_data)
 
 # Perform Random Forest (RF)
 predsRF_without_story <- randomForestCorpus(train_data, test_data)
-predsRF_all <- randomForestCorpus(combined_q1$features, test_data)
+#predsRF_all <- randomForestCorpus(combined_q1$features, test_data)
 
 # Evaluate Accuracy
 DA_without_story_accuracy <- sum(predsDA_without_story == truth_test) / length(truth_test)
-DA_all_accuracy <- sum(predsDA_all == truth_test) / length(truth_test)
+#DA_all_accuracy <- sum(predsDA_all == truth_test) / length(truth_test)
 
 KNN_without_story_accuracy <- sum(predsKNN_without_story == truth_test) / length(truth_test)
-KNN_all_accuracy <- sum(predsKNN_all == truth_test) / length(truth_test)
+#KNN_all_accuracy <- sum(predsKNN_all == truth_test) / length(truth_test)
 
 RF_without_story_accuracy <- sum(predsRF_without_story == truth_test) / length(truth_test)
-RF_all_accuracy <- sum(predsRF_all == truth_test) / length(truth_test)
+#RF_all_accuracy <- sum(predsRF_all == truth_test) / length(truth_test)
 
 # 新的SVM!!!!!!!!!!------
 SVM_without_story_accuracy <- train_svm(combined_without_story$features, combined_only_story$features)
-SVM_all_accuracy <- train_svm(combined_q1$features, combined_only_story$features)
+#SVM_all_accuracy <- train_svm(combined_q1$features, combined_only_story$features)
 
 # Print Results
 cat("Discriminant Analysis Accuracy without 'story' in the model:", DA_without_story_accuracy, "\n")
 cat("K-Nearest Neighbors Accuracy without 'story' in the model:", KNN_without_story_accuracy, "\n")
 cat("Random Forest Accuracy without 'story' in the model:", RF_without_story_accuracy, "\n")
-cat("Discriminant Analysis Accuracy with 'story' in the model:", DA_all_accuracy, "\n")
-cat("K-Nearest Neighbors Accuracy with 'story' in the model:", KNN_all_accuracy, "\n")
-cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
+# cat("Discriminant Analysis Accuracy with 'story' in the model:", DA_all_accuracy, "\n")
+# cat("K-Nearest Neighbors Accuracy with 'story' in the model:", KNN_all_accuracy, "\n")
+# cat("Random Forest Accuracy with 'story' in the model:", RF_all_accuracy, "\n")
 
 
 
