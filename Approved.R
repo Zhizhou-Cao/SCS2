@@ -245,7 +245,7 @@ accuracy_long$Method <- factor(
 
 # Create the plot
 
-q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
+(q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = Method)) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 3, alpha = 0.6) +
   labs(
@@ -254,17 +254,17 @@ q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = M
     y = "Accuracy",
     color = "Method"
   ) +
-  scale_x_continuous(breaks = fold_range) +
+  scale_x_continuous(breaks = range_of_fold) +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, size = 20),
     axis.title = element_text(size = 20),
     legend.title = element_text(size = 15),
-    legend.text = element_text(size = 20),
-    legend.position = c(0.5, 0.5), # Updated position argument
+    legend.text = element_text(size = 13),
+    legend.position = c(0.5, 0.3), # Updated position argument
     legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
-    )
-q1accuracy_plot
+    ))
+
 ggsave(filename = "q1accuracy_plot.png", plot = q1accuracy_plot)
 
 # Q2 -----
