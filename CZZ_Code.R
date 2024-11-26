@@ -719,5 +719,3 @@ KNNmean_accuracy
 
 
 
-
-

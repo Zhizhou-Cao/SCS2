@@ -84,7 +84,7 @@ for (fold in 1:n_folds) {
   truth_fold <- c(rep(1, nrow(test_human)), rep(2, nrow(test_gptm)))
   
   # Train and predict using KNN
-  predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold, k=5)
+  predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold, k=7)
   KNNaccuracy_list[fold] <- sum(predsKNN_fold == truth_fold) / length(truth_fold)
 }
 
@@ -162,16 +162,17 @@ accuracy_df <- data.frame(
 # Generate the ggplot
 ggplot(accuracy_df, aes(x = k, y = mean_accuracy)) +
   geom_line(color = "blue", size = 1) +   # Line for accuracy
-  geom_point(color = "blue", size = 3) + # Points for each k
+  geom_point(color = "blue", size = 3, alpha = 0.5) + # Points for each k
   geom_vline(xintercept = optimal_k, color = "red", linetype = "dashed") + # Optimal k
   labs(
     title = "Optimal k for kNN",
     x = "k (Number of Neighbors)",
     y = "Mean Accuracy"
   ) +
+  ylim(0.978, 0.9875)+
   theme_minimal(base_size = 15) + # Clean theme with larger text
   annotate("text", x = optimal_k, y = optimal_k_accuracy, 
-           label = paste("Optimal k =", optimal_k), 
+           label = paste("Optimal k =", optimal_k), size = 8,
            vjust = -1, hjust = 0.5, color = "red")
 
 
