@@ -46,7 +46,7 @@ loadCorpus <- function(filedir,featureset="functionwords",maxauthors=Inf) {
   return(list(features=features,booknames=booknames,authornames=authornames))
 }
 
-myKNN <- function(traindata, testdata, trainlabels, k=1) {
+myKNN <- function(traindata, testdata, trainlabels, k=3) {
   if (mode(traindata) == 'numeric' && !is.matrix(traindata)) {
     traindata <- matrix(traindata,nrow=1)
   }
@@ -77,6 +77,7 @@ myKNN <- function(traindata, testdata, trainlabels, k=1) {
   return(preds)
 }
 
+
 discriminantCorpus <- function(traindata, testdata) {
   thetas <- NULL
   preds <- NULL
@@ -102,11 +103,13 @@ discriminantCorpus <- function(traindata, testdata) {
   return(preds)
 }
 
-
-KNNCorpus <- function(traindata, testdata) {
+KNNCorpus <- function(traindata, testdata, k=3) {
   train <- NULL
+  trainlabels <- numeric()
   for (i in 1:length(traindata)) {
-    train <- rbind(train, apply(traindata[[i]],2,sum))
+   # train <- rbind(train, apply(traindata[[i]],2,sum))
+    train <- rbind(train, traindata[[i]])
+    trainlabels <- c(trainlabels, rep(i,nrow(traindata[[i]])))
   }
   
   for (i in 1:nrow(train)) {
@@ -115,8 +118,8 @@ KNNCorpus <- function(traindata, testdata) {
   for (i in 1:nrow(testdata)) {
     testdata[i,] <- testdata[i,]/sum(testdata[i,])
   }
-  trainlabels <- 1:nrow(train)
-  myKNN(train, testdata, trainlabels,k=1)
+  #trainlabels <- 1:nrow(train)
+  myKNN(train, testdata, trainlabels,k=k)
 }
 
 randomForestCorpus <- function(traindata, testdata) {
