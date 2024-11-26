@@ -64,7 +64,7 @@ evaluate_model <- function(trainset, testset, fold_range = 5) {
       
       # Train and predict using different methods
       predsDA_fold <- discriminantCorpus(list(train_human, train_gptm), test_fold)
-      predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold)
+      predsKNN_fold <- KNNCorpus(list(train_human, train_gptm), test_fold, k = 7)
       predsRF_fold <- randomForestCorpus(list(train_human, train_gptm), test_fold)
       
       # Train and predict using SVM
@@ -117,6 +117,10 @@ train_svm <- function(train_data, test_data) {
   return(accuracy)
 }
 
+
+
+
+
 # Q1 ----
 # Create a new list for Q1
 combined_q1 <- list(
@@ -127,6 +131,13 @@ combined_q1 <- list(
 
 combined_q1$features$GPTM <- do.call(rbind, combined_q1$features$GPTM)
 combined_q1$features$human <- do.call(rbind, combined_q1$features$human)
+
+
+# Find Optimal K for KNN
+
+
+
+
 
 # K-Fold iteration for four methods
 # Set up parameters
