@@ -4,5 +4,5 @@
 
 ### **Repository Contents**:
 - **Code**: All code is contained in the `Approved.R` file.
-- **Plots**: Visualizations are saved in the `Images` folder.
+- **Plots**: Visualisations are saved in the `Images` folder.
 - **Data**: The dataset is available in the `functionwords` folder.
