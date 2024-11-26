@@ -1,5 +1,6 @@
 
 # Import Libraries
+library(dplyr)
 library(ggplot2)
 library(lattice)
 library(class)
@@ -207,12 +208,12 @@ accuracy_df <- data.frame(
     y = "Mean Accuracy"
   ) +
   ylim(0.978, 0.9875)+
-  theme_minimal(base_size = 15) + # Clean theme with larger text
+  theme_minimal(base_size = 18) + # Clean theme with larger text
   annotate("text", x = optimal_k, y = optimal_k_accuracy, 
            label = paste("Optimal k =", optimal_k), size = 8,
            vjust = -1, hjust = 0.5, color = "red"))
 
-ggsave(filename = "optimal_K_plot.png", plot = optimal_K_plot)
+ggsave(filename = "Images/optimal_K_plot.png", plot = optimal_K_plot)
 
 
 
@@ -225,7 +226,16 @@ range_of_fold <- 3:10 # Range of folds to test
 accuracy_table <- evaluate_model(combined_q1$features, combined_q1$features, range_of_fold)
  
 # Print the accuracy table
-kable(accuracy_table, caption = "Average Accuracy Across Methods", format = "latex", booktabs = TRUE)
+
+# Assuming `results_all` is your data frame
+accuracy_table_percentage <- accuracy_table %>% 
+  mutate(across(DA_accuracy:SVM_accuracy, ~ round(. * 100, 1)))
+
+# Generate the table
+kable(accuracy_table_percentage, format = 'latex', booktabs = TRUE, 
+      caption = "Accuracy with Full 71 Function Words(in percentage)")
+
+
 
 # Visualisation
 # Plotting the accuracy table using ggplot2
@@ -265,7 +275,7 @@ accuracy_long$Method <- factor(
     legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
     ))
 
-ggsave(filename = "q1accuracy_plot.png", plot = q1accuracy_plot)
+ggsave(filename = "Images/q1accuracy_plot.png", plot = q1accuracy_plot)
 
 # Q2 -----
 humanM$authornames <- rep(0, length(humanM$authornames))
@@ -928,7 +938,7 @@ q4variance_plot<- ggplot(variance_df, aes(x = Rank, y = Variance)) +
     text = element_text(size = 20))
 
 q4variance_plot
-ggsave(filename = "q4variance_plot.png", plot = q4variance_plot)
+ggsave(filename = "Images/q4variance_plot.png", plot = q4variance_plot)
 
 # Test the words effect on modelling
 top3_word_indices <- words_order[1:3] #c(52, 39, 58)
@@ -996,14 +1006,20 @@ Q4_accuracy_table <- data.frame(
   DA,KNN,RF,SVM)
 
 # View the resulting data frame
-kable(Q4_accuracy_table, format = 'latex', booktabs = TRUE, caption = "Accuracy Across Function Words")
+
+Q4_accuracy_table_percentage <- Q4_accuracy_table %>% 
+  mutate(across(DA:SVM, ~ round(. * 100, 1)))
+
+# Generate the table
+kable(Q4_accuracy_table_percentage, format = 'latex', booktabs = TRUE, 
+      caption = "Accuracy Across Function Words(in percentage)")
+
 
 # Convert the data frame to long format for ggplot
 Q4accuracy_long <- reshape2::melt(Q4_accuracy_table, 
                                   id.vars = "num_function_words", 
                                   variable.name = "Method", 
                                   value.name = "Accuracy")
-
 
 
 # Plot
@@ -1025,11 +1041,17 @@ q4words_plot<- ggplot(Q4accuracy_long, aes(x = num_function_words, y = Accuracy,
     legend.key.size = unit(0.8, "cm")  # Adjust legend key size
   )
 q4words_plot
-ggsave(filename = "q4words_plot.png", plot = q4words_plot)
+ggsave(filename = "Images/q4words_plot.png", plot = q4words_plot)
 
 results_all <- evaluate_model(combined_q1$features, combined_q1$features)
-kable(results_all, format = 'latex',booktabs = TRUE, caption = "Accuracy with Full 71 Function Words")
 
+# Assuming `results_all` is your data frame
+results_all_percentage <- results_all %>% 
+  mutate(across(DA_accuracy:SVM_accuracy, ~ round(. * 100, 1)))
+
+# Generate the table
+kable(results_all_percentage, format = 'latex', booktabs = TRUE, 
+      caption = "Accuracy with Full 71 Function Words(in percentage)")
 
 
 
