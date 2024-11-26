@@ -180,10 +180,10 @@ q1accuracy_plot<- ggplot(accuracy_long, aes(x = n_folds, y = Accuracy, color = M
   theme(
     plot.title = element_text(hjust = 0.5, size = 20),
     axis.title = element_text(size = 20),
-    legend.title = element_text(size = 15),
-    legend.text = element_text(size = 20),
-    legend.position = c(0.5, 0.5), # Updated position argument
-    legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
+    #legend.title = element_text(size = 5),
+    #legend.text = element_text(size = 7),
+    #legend.position = c(0.1, 0.1), # Updated position argument
+    #legend.background = element_rect(fill = "white", color = "grey", linewidth = 0.5) # Updated linewidth argument
     )
 q1accuracy_plot
 ggsave(filename = "q1accuracy_plot.png", plot = q1accuracy_plot)
@@ -376,7 +376,7 @@ for (name in names(results_matrices)) {
 
 # Print the final table
 print(final_table)
-
+kable(final_table, format = 'latex',booktabs = TRUE, caption = "Accuracy with Full 71 Function Words")
 
 # Q3 -----
 
